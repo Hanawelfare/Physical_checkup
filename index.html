@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hana Annual Health Checkup Portal 2569 - ระบบลงทะเบียนตรวจสุขภาพประจำปี</title>
+  
+  <!-- Google Fonts: Outfit (English) & Kanit (Thai) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Mode Switcher -->
+    <div class="mode-indicator">
+      <span class="status-dot" id="status-dot"></span>
+      <select id="app-mode-selector">
+        <option value="mock">Offline Mode (Mock Data)</option>
+        <option value="api">Online Mode (Google Sheet)</option>
+      </select>
+    </div>
+
+    <!-- Header Banner -->
+    <header class="header-banner">
+      <div class="header-logo-row">
+        <img src="https://img1.pic.in.th/images/Logo-hana.png" alt="Hana Logo" class="hana-logo">
+        <div class="header-text-col">
+          <h1>ระบบลงทะเบียนตรวจสุขภาพประจำปี 2569</h1>
+          <p>Hana Annual Health Checkup Portal</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Welcome Alert Card -->
+    <div class="welcome-card" id="welcome-card-banner">
+      <div class="welcome-icon"><i class="fa-solid fa-user-check"></i></div>
+      <div class="welcome-text">
+        <h3>ยินดีต้อนรับสู่ระบบลงทะเบียนตรวจสุขภาพพนักงาน</h3>
+        <p>กรุณากรอกรหัสพนักงานเพื่อดูโปรแกรมตรวจสุขภาพเฉพาะบุคคล เลือกกะการทำงาน สถานที่ และรอบเวลาที่สะดวก</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" id="tab-btn-register" onclick="switchTab('register')">
+        <i class="fa-solid fa-file-medical"></i> ลงทะเบียนตรวจสุขภาพ
+      </button>
+      <button class="tab-btn" id="tab-btn-status" onclick="switchTab('status')">
+        <i class="fa-solid fa-address-card"></i> ตรวจสอบผลการลงทะเบียน
+      </button>
+    </nav>
+
+    <!-- TAB 1: REGISTRATION -->
+    <div class="tab-content active" id="tab-register">
+      
+      <form id="health-registration-form" onsubmit="handleRegistrationSubmit(event)" autocomplete="off">
+        
+        <div class="section-title">
+          <span class="step-num">1</span> ค้นหาข้อมูลพนักงาน
+        </div>
+        
+        <div class="form-grid">
+          <!-- Employee ID Lookup -->
+          <div class="form-group full-width">
+            <label for="reg-emp-id"><i class="fa-solid fa-id-badge"></i> รหัสพนักงาน (มีเลข 0 นำหน้าเสมอ เช่น 003049)</label>
+            <div class="search-input-wrapper">
+              <input type="text" id="reg-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 003049" required>
+              <button type="button" class="btn-search" onclick="lookupEmployee()">
+                <i class="fa-solid fa-magnifying-glass"></i> ค้นหาข้อมูล
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employee Info Section (Hidden until ID lookup succeeds) -->
+        <div id="employee-profile-box" style="display: none;">
+          <div class="employee-profile-card">
+            <div class="profile-info-grid">
+              <div class="profile-info-item">
+                <span class="profile-lbl">ชื่อ - นามสกุล</span>
+                <span class="profile-val" id="profile-name">คุณวิชัย สุขประเสริฐกุล</span>
+              </div>
+              <div class="profile-info-item">
+                <span class="profile-lbl">แผนก (Department)</span>
+                <span class="profile-val" id="profile-dept">OPT</span>
+              </div>
+              <div class="profile-info-item">
+                <span class="profile-lbl">โปรแกรมตรวจสุขภาพ</span>
+                <span class="profile-val highlight-blue" id="profile-program-group">โปรแกรม MGR</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Dynamic Program Test Items details -->
+          <div class="program-checkup-section visible" id="program-tests-box">
+            <div class="program-header">
+              <span><i class="fa-solid fa-clipboard-list"></i> รายการตรวจตามสิทธิ์โปรแกรมสุขภาพของท่าน:</span>
+            </div>
+            <div class="checkup-items-grid" id="checkup-items-list">
+              <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Cancer screening options for MGR managers -->
+            <div class="cancer-selection-wrapper" id="cancer-selection-wrapper" style="display: none;">
+              <div class="cancer-title">
+                <i class="fa-solid fa-circle-exclamation"></i> พิเศษสำหรับผู้บริหาร: กรุณาเลือกรายการตรวจมะเร็ง 1 รายการ
+              </div>
+              <div class="cancer-grid">
+                <label class="cancer-option" onclick="selectCancerOption(this)">
+                  <input type="radio" name="cancerTest" value="ตรวจคัดกรองมะเร็งต่อมลูกหมาก (PSA)" required>
+                  <span class="cancer-option-name">1. ตรวจคัดกรองมะเร็งต่อมลูกหมาก (PSA)</span>
+                </label>
+                <label class="cancer-option" onclick="selectCancerOption(this)">
+                  <input type="radio" name="cancerTest" value="ตรวจคัดกรองมะเร็งลำไส้ (CEA)">
+                  <span class="cancer-option-name">2. ตรวจคัดกรองมะเร็งลำไส้ (CEA)</span>
+                </label>
+                <label class="cancer-option" onclick="selectCancerOption(this)">
+                  <input type="radio" name="cancerTest" value="ตรวจคัดกรองมะเร็งตับ (AFP)">
+                  <span class="cancer-option-name">3. ตรวจคัดกรองมะเร็งตับ (AFP)</span>
+                </label>
+                <label class="cancer-option" onclick="selectCancerOption(this)">
+                  <input type="radio" name="cancerTest" value="ตรวจคัดกรองมะเร็งรังไข่ (CA125)">
+                  <span class="cancer-option-name">4. ตรวจคัดกรองมะเร็งรังไข่ (CA125)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <span class="step-num">2</span> กรอกข้อมูลการทำงาน เลือกสถานที่และวันเวลาตรวจ
+          </div>
+
+          <!-- Extra Registration Inputs -->
+          <div class="form-grid">
+            
+            <!-- Phone Number inside company -->
+            <div class="form-group">
+              <label for="reg-phone"><i class="fa-solid fa-phone"></i> เบอร์โทรภายใน * (เลข 1-4 หลัก)</label>
+              <input type="tel" id="reg-phone" placeholder="ระบุเบอร์โทรภายใน เช่น 1234" maxlength="4" required oninput="validatePhone(this)">
+            </div>
+            
+            <!-- Working Shift -->
+            <div class="form-group">
+              <label for="reg-shift"><i class="fa-solid fa-business-time"></i> กะทำงาน *</label>
+              <select id="reg-shift" onchange="onShiftOrLocationChange()" required>
+                <option value="" disabled selected>-- เลือกกะทำงาน --</option>
+                <option value="ทีม A">ทีม A</option>
+                <option value="ทีม B">ทีม B</option>
+                <option value="เช้าตลอด">เช้าตลอด</option>
+                <option value="คร่อมกะ">คร่อมกะ</option>
+              </select>
+            </div>
+
+            <!-- Health Checkup Location -->
+            <div class="form-group">
+              <label for="reg-location"><i class="fa-solid fa-location-dot"></i> สถานที่ตรวจสุขภาพ *</label>
+              <select id="reg-location" onchange="onShiftOrLocationChange()" required>
+                <option value="" disabled selected>-- เลือกสถานที่ --</option>
+                <option value="LPN1">LPN1 (Lobby (เก่า) อาคาร 2)</option>
+                <option value="LPN2">LPN2 (ห้องฝึกอบรมชั้น 2)</option>
+              </select>
+            </div>
+
+            <!-- Registration Date -->
+            <div class="form-group">
+              <label for="reg-date"><i class="fa-solid fa-calendar-days"></i> วันที่ตรวจสุขภาพ *</label>
+              <select id="reg-date" onchange="onDateChange()" required disabled>
+                <option value="" disabled selected>-- กรุณาเลือกสถานที่และกะก่อน --</option>
+              </select>
+            </div>
+
+            <!-- Registration Time Slot (Button Grid) -->
+            <div class="form-group full-width">
+              <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ * (รอบละ 30 นาที) <span class="fasting-note-header">(รอบ 06:00 - 08:30 น. สงวนสิทธิ์สำหรับตรวจที่ต้องงดน้ำ/อาหารเท่านั้น)</span></label>
+              
+              <div class="time-slots-wrapper">
+                <!-- Helper hidden input for HTML5 validity -->
+                <input type="hidden" id="selected-time-slot" required>
+                
+                <div class="time-slots-grid" id="time-slots-grid-container">
+                  <div class="empty-slots-msg">กรุณาเลือกวันที่ตรวจสุขภาพด้านบนก่อน เพื่อดึงข้อมูลรอบเวลาว่าง</div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+
+          <!-- Submit Action Button -->
+          <div class="form-actions">
+            <button type="submit" class="btn-submit" id="btn-submit-registration">
+              <i class="fa-solid fa-calendar-check"></i> ยืนยันการลงทะเบียนตรวจสุขภาพ
+            </button>
+          </div>
+          
+        </div>
+      </form>
+      
+    </div>
+
+    <!-- TAB 2: CHECK REGISTRATION STATUS -->
+    <div class="tab-content" id="tab-status">
+      
+      <div class="status-search-card no-print">
+        <h2><i class="fa-solid fa-search"></i> ค้นหาผลการลงทะเบียนของคุณ</h2>
+        <p>กรอกรหัสพนักงาน (จะมีเลข 0 ข้างหน้าเสมอ) เพื่อดูรายละเอียดบัตรลงทะเบียน</p>
+        <div class="search-input-wrapper" style="max-width: 450px; margin: 0 auto;">
+          <input type="text" id="status-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 003049" onkeypress="handleStatusSearchKeyPress(event)">
+          <button type="button" class="btn-search" onclick="checkRegistrationStatus()">
+            <i class="fa-solid fa-magnifying-glass"></i> ตรวจสอบข้อมูล
+          </button>
+        </div>
+      </div>
+
+      <!-- Result Booking Card matching Image 1 exactly -->
+      <div class="result-card-container" id="result-card-container">
+        <div class="health-card">
+          <div class="health-card-header">
+            <div class="health-card-title">
+              <h2>บัตรลงทะเบียนตรวจสุขภาพ 2569</h2>
+              <p>Annual Health Checkup Ticket Pass</p>
+            </div>
+            <div class="health-card-status-badge"><i class="fa-solid fa-circle-check"></i> ลงทะเบียนเรียบร้อย</div>
+            <div class="health-card-deco-dots">
+              <span></span><span></span><span></span><br>
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          
+          <div class="health-card-body">
+            <!-- Row 1: Personal Info -->
+            <div class="ticket-personal-grid">
+              <div class="ticket-info-block">
+                <span class="lbl">รหัสพนักงาน</span>
+                <span class="val" id="card-empid-val">003049</span>
+              </div>
+              <div class="ticket-info-block">
+                <span class="lbl">ชื่อ - นามสกุล</span>
+                <span class="val" id="card-name-val">วิชัย สุขประเสริฐกุล</span>
+              </div>
+              <div class="ticket-info-block">
+                <span class="lbl">แผนก / เบอร์ภายใน</span>
+                <span class="val" id="card-dept-phone-val">OPT / เบอร์ภายใน 1234</span>
+              </div>
+            </div>
+            
+            <!-- Row 2: Highlights Row (3 flex columns in blue box) -->
+            <div class="ticket-highlights-box">
+              <div class="highlight-col">
+                <div class="icon-circle"><i class="fa-solid fa-building"></i></div>
+                <div class="text-group">
+                  <span class="lbl">สถานที่ตรวจ</span>
+                  <span class="val" id="card-loc-val">LPN1 (Lobby(เก่า) อาคาร2)</span>
+                </div>
+              </div>
+              <div class="highlight-col">
+                <div class="icon-circle"><i class="fa-solid fa-calendar-days"></i></div>
+                <div class="text-group">
+                  <span class="lbl">วันที่ตรวจ</span>
+                  <span class="val" id="card-date-val">30 กันยายน 2569</span>
+                </div>
+              </div>
+              <div class="highlight-col">
+                <div class="icon-circle"><i class="fa-solid fa-clock"></i></div>
+                <div class="text-group">
+                  <span class="lbl">รอบเวลา</span>
+                  <span class="val" id="card-time-val">07.00 - 07.30 น.</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Row 3: Tests list checklists -->
+            <div class="ticket-tests-section">
+              <h4 class="section-subtitle">
+                <i class="fa-solid fa-notes-medical"></i> รายการตรวจสุขภาพของท่าน ( <span id="card-program-title">โปรแกรม MGR</span> )
+              </h4>
+              <div class="ticket-tests-columns" id="card-tests-list-container">
+                <!-- Checkup items checklist rendered dynamically -->
+              </div>
+            </div>
+            
+            <!-- Row 4: Fasting Warning Banner -->
+            <div class="ticket-warning-box">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <div class="warning-text">
+                <strong>ข้อปฏิบัติในการเตรียมตัว:</strong> กรณีที่มีการตรวจเจาะเลือด ไขมัน หรือน้ำตาล โปรดงดน้ำและงดอาหารล่วงหน้าอย่างน้อย 8-10 ชั่วโมงก่อนเข้ารับการตรวจ
+              </div>
+            </div>
+            
+          </div>
+          
+          <!-- Bottom actions -->
+          <div class="health-card-footer no-print">
+            <button class="btn-card-print" onclick="window.print()">
+              <i class="fa-solid fa-print"></i> พิมพ์ / บันทึกการ์ด
+            </button>
+            <div class="footer-right-actions">
+              <button class="btn-card-cancel" onclick="cancelRegistration()">
+                <i class="fa-solid fa-trash-can"></i> ยกเลิกการลงทะเบียน
+              </button>
+              <button class="btn-card-edit" onclick="editRegistration()">
+                <i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+      <div class="spinner"></div>
+      <div style="color: #0369a1; font-weight: 600; font-size: 1.1rem;" id="loading-text">กำลังตรวจสอบข้อมูล...</div>
+    </div>
+
+    <!-- Success Confirmation Overlay -->
+    <div class="success-overlay" id="success-overlay">
+      <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+      <h2 id="success-title">ลงทะเบียนเรียบร้อยแล้ว!</h2>
+      <p id="success-message">ข้อมูลการลงทะเบียนตรวจสุขภาพของคุณได้รับการบันทึกในระบบเรียบร้อยแล้ว คุณสามารถตรวจสอบรายละเอียดหรือแก้ไขข้อมูลได้จากแท็บ "ตรวจสอบผลการลงทะเบียน"</p>
+      <button class="btn-overlay" onclick="closeSuccessOverlay()">ตกลง</button>
+    </div>
+
+  </div>
+
+  <!-- Custom Alert Toast Message -->
+  <div class="toast-msg" id="toast-msg">
+    <i class="fa-solid" id="toast-icon"></i>
+    <span id="toast-text">ข้อความแจ้งเตือน</span>
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>

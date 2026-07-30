@@ -1,0 +1,846 @@
+/**
+ * app.js - Client-side Logic for Annual Health Check Registration System
+ */
+
+// Global Configuration
+const CONFIG = {
+  // Paste your deployed Google Sheets Web App URL here
+  apiUrl: "https://script.google.com/macros/s/AKfycbxl0kN1jKq-u5Wf--ftanFX0hSbrp7tPgdM9c149c0kUs3bP3ggdKrnOTOq0tgf1TaaDA/exec",
+  currentMode: "api", // Defaults to "api" to connect directly to the user's live sheet
+};
+
+// Global State
+const STATE = {
+  activeEmployee: null,
+  activeRegistration: null,
+  configDates: [],
+  configTimeSlots: [],
+  registrationCounts: {},
+  selectedTimeSlot: "" // Holds the currently clicked slot text
+};
+
+// --- Test Programs Data ---
+const PROGRAM_TESTS = {
+  "โปรแกรม MGR": [
+    { name: "พบแพทย์ (PE)", npo: false },
+    { name: "สายตา (EYE)", npo: false },
+    { name: "ความสมบูรณ์ของเม็ดเลือด (CBC)", npo: false },
+    { name: "ปัสสาวะ (UA)", npo: false },
+    { name: "เอกซเรย์ (X-RAY)", npo: false },
+    { name: "ไขมัน (Cholesterol, TG, LDL, HDL)", npo: true },
+    { name: "น้ำตาล (FBS)", npo: true },
+    { name: "การทำงานของตับ (SGOT, SGPT)", npo: false },
+    { name: "การทำงานของไต (BUN, Cr)", npo: false },
+    { name: "กรดยูริค (เก๊าท์)", npo: false },
+    { name: "ตรวจหาน้ำตาลสะสม (คัดกรองโรคเบาหวาน) (HbA1C)", npo: false }
+  ],
+  "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป": [
+    { name: "พบแพทย์ (PE)", npo: false },
+    { name: "สายตา (EYE)", npo: false },
+    { name: "เจาะเลือด CBC", npo: false },
+    { name: "ปัสสาวะ (UA)", npo: false },
+    { name: "เอกซเรย์ (X-RAY)", npo: false },
+    { name: "ไขมัน (Cholesterol, TG, LDL, HDL)", npo: true }
+  ],
+  "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี": [
+    { name: "พบแพทย์ (PE)", npo: false },
+    { name: "สายตา (EYE)", npo: false },
+    { name: "เจาะเลือด CBC", npo: false },
+    { name: "ปัสสาวะ (UA)", npo: false },
+    { name: "เอกซเรย์ (X-RAY)", npo: false }
+  ]
+};
+
+// --- Mock Data for Offline Mode ---
+const MOCK_EMPLOYEES = [
+  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, programGroup: "โปรแกรม MGR" },
+  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR" },
+  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
+  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR" },
+  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, programGroup: "โปรแกรม MGR" },
+  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, programGroup: "โปรแกรม MGR" },
+  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี" }
+];
+
+const MOCK_CONFIG_DATES = [
+  { location: "LPN1", dateString: "30 กันยายน 2569", team: "ทีม A" },
+  { location: "LPN1", dateString: "1 ตุลาคม 2569", team: "ทีม A" },
+  { location: "LPN1", dateString: "6 ตุลาคม 2569", team: "ทีม B" },
+  { location: "LPN1", dateString: "7 ตุลาคม 2569", team: "ทีม B" },
+  { location: "LPN2", dateString: "2 ตุลาคม 2569", team: "ทีม A" },
+  { location: "LPN2", dateString: "5 ตุลาคม 2569", team: "ทีม B" }
+];
+
+const MOCK_CONFIG_TIMESLOTS = [
+  { slotTime: "06:00 - 06:30", limit: 350 },
+  { slotTime: "06:30 - 07:00", limit: 350 },
+  { slotTime: "07:00 - 07:30", limit: 350 },
+  { slotTime: "07:30 - 08:00", limit: 350 },
+  { slotTime: "08:00 - 08:30", limit: 350 },
+  { slotTime: "08:30 - 09:00", limit: 50 },
+  { slotTime: "09:00 - 09:30", limit: 50 },
+  { slotTime: "09:30 - 10:00", limit: 50 },
+  { slotTime: "10:00 - 10:30", limit: 50 },
+  { slotTime: "10:30 - 11:00", limit: 50 },
+  { slotTime: "11:00 - 11:30", limit: 50 },
+  { slotTime: "11:30 - 12:00", limit: 50 },
+  { slotTime: "12:00 - 12:30", limit: 50 },
+  { slotTime: "12:30 - 13:00", limit: 50 },
+  { slotTime: "13:00 - 13:30", limit: 50 },
+  { slotTime: "13:30 - 14:00", limit: 50 }
+];
+
+// Initialize Mock Registrations locally in LocalStorage
+if (!localStorage.getItem("MOCK_REGISTRATIONS")) {
+  const initialRegs = [
+    { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", phone: "2201", shift: "ทีม A", location: "LPN1", dateString: "30 กันยายน 2569", timeString: "07:00 - 07:30", cancerTest: "ตรวจคัดกรองมะเร็งต่อมลูกหมาก (PSA)", timestamp: "2026-07-30 08:30:12" },
+    { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", phone: "1041", shift: "ทีม B", location: "LPN2", dateString: "5 ตุลาคม 2569", timeString: "09:00 - 09:30", cancerTest: "", timestamp: "2026-07-30 09:12:44" }
+  ];
+  localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(initialRegs));
+}
+
+// --- Initialize App ---
+document.addEventListener("DOMContentLoaded", () => {
+  setupModeSelector();
+  loadConfigAndCounts();
+});
+
+function setupModeSelector() {
+  const selector = document.getElementById("app-mode-selector");
+  selector.value = CONFIG.currentMode;
+  updateStatusDot(CONFIG.currentMode);
+  
+  selector.addEventListener("change", (e) => {
+    CONFIG.currentMode = e.target.value;
+    updateStatusDot(CONFIG.currentMode);
+    showToast(`สลับโหมดเป็น: ${CONFIG.currentMode === "api" ? "เชื่อมต่อ Google Sheet" : "จำลองระบบออฟไลน์ (Mock)"}`, "info");
+    
+    resetForm();
+    document.getElementById("result-card-container").classList.remove("visible");
+    loadConfigAndCounts();
+  });
+}
+
+function updateStatusDot(mode) {
+  const dot = document.getElementById("status-dot");
+  if (mode === "api") {
+    dot.className = "status-dot";
+  } else {
+    dot.className = "status-dot offline";
+  }
+}
+
+// --- Load config settings & counts dynamically ---
+async function loadConfigAndCounts() {
+  if (CONFIG.currentMode === "mock") {
+    STATE.configDates = MOCK_CONFIG_DATES;
+    STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
+    
+    const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+    STATE.registrationCounts = {};
+    regs.forEach(r => {
+      const key = `${r.location}|${r.dateString}|${r.timeString}`;
+      STATE.registrationCounts[key] = (STATE.registrationCounts[key] || 0) + 1;
+    });
+  } else {
+    showLoader("กำลังดึงข้อมูลกำหนดการและสิทธิ์การจองล่าสุด...");
+    try {
+      const response = await callApi("getConfigAndSlots", []);
+      if (response && response.success) {
+        STATE.configDates = response.data.dates;
+        STATE.configTimeSlots = response.data.timeSlots;
+        STATE.registrationCounts = response.data.registrationCounts;
+      } else {
+        throw new Error(response.error || "ดึงข้อมูลล้มเหลว");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("ไม่สามารถเชื่อมต่อ Google Sheets API ได้ จะใช้ข้อมูลจำลองแทนชั่วคราว", "warning");
+      STATE.configDates = MOCK_CONFIG_DATES;
+      STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
+    } finally {
+      hideLoader();
+    }
+  }
+}
+
+// --- Navigation Tabs Control ---
+function switchTab(tabName) {
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(`tab-btn-${tabName}`).classList.add("active");
+  
+  document.querySelectorAll(".tab-content").forEach(panel => panel.classList.remove("active"));
+  document.getElementById(`tab-${tabName}`).classList.add("active");
+}
+
+// --- Lookup Employee Details ---
+async function lookupEmployee() {
+  const empInput = document.getElementById("reg-emp-id");
+  let empId = empInput.value.trim();
+  
+  if (!empId) {
+    showToast("กรุณากรอกรหัสพนักงาน", "warning");
+    return;
+  }
+  
+  if (/^\d+$/.test(empId)) {
+    empId = empId.padStart(6, '0');
+    empInput.value = empId;
+  }
+  
+  showLoader("กำลังค้นหาข้อมูลพนักงาน...");
+  
+  if (CONFIG.currentMode === "mock") {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
+    handleEmployeeLookupResult(emp);
+  } else {
+    try {
+      const res = await callApi("getEmployeeData", [empId]);
+      if (res && res.success) {
+        handleEmployeeLookupResult(res.data);
+      } else {
+        throw new Error(res.error || "เกิดข้อผิดพลาดในการดึงข้อมูล");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(`ไม่พบรหัสพนักงาน: ${err.message}`, "error");
+      handleEmployeeLookupResult(null);
+    } finally {
+      hideLoader();
+    }
+  }
+}
+
+function handleEmployeeLookupResult(employee) {
+  const profileBox = document.getElementById("employee-profile-box");
+  
+  if (!employee) {
+    showToast("ไม่พบข้อมูลพนักงานท่านนี้ กรุณาตรวจสอบรหัสพนักงานใหม่อีกครั้ง", "error");
+    profileBox.style.display = "none";
+    STATE.activeEmployee = null;
+    return;
+  }
+  
+  STATE.activeEmployee = employee;
+  
+  // Populate Profile UI (Age completely omitted for PDPA compliance)
+  document.getElementById("profile-name").textContent = `${employee.firstName} ${employee.lastName}`;
+  document.getElementById("profile-dept").textContent = employee.department;
+  
+  const programGroup = employee.programGroup;
+  document.getElementById("profile-program-group").textContent = programGroup;
+  
+  // Populate checkup items grid
+  const itemsList = document.getElementById("checkup-items-list");
+  itemsList.innerHTML = "";
+  
+  const tests = PROGRAM_TESTS[programGroup] || [];
+  tests.forEach((t, i) => {
+    const item = document.createElement("div");
+    item.className = t.npo ? "checkup-item npo" : "checkup-item";
+    
+    let iconClass = t.npo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
+    let extraSpan = t.npo ? `<span class="npo-badge">งดน้ำ-งดอาหาร</span>` : "";
+    
+    item.innerHTML = `
+      <i class="${iconClass}"></i>
+      <span>${i + 1}. ${t.name}</span>
+      ${extraSpan}
+    `;
+    itemsList.appendChild(item);
+  });
+  
+  // Handle Cancer selection for MGR
+  const cancerSelectionWrapper = document.getElementById("cancer-selection-wrapper");
+  const radioButtons = document.querySelectorAll('input[name="cancerTest"]');
+  
+  if (programGroup === "โปรแกรม MGR") {
+    cancerSelectionWrapper.style.display = "block";
+    radioButtons.forEach(btn => btn.required = true);
+  } else {
+    cancerSelectionWrapper.style.display = "none";
+    radioButtons.forEach(btn => {
+      btn.required = false;
+      btn.checked = false;
+    });
+    document.querySelectorAll(".cancer-option").forEach(opt => opt.classList.remove("selected"));
+  }
+  
+  // Try to set default location based on sheet data
+  const locSelect = document.getElementById("reg-location");
+  if (employee.defaultLocation && (employee.defaultLocation === "LPN1" || employee.defaultLocation === "LPN2")) {
+    locSelect.value = employee.defaultLocation;
+  } else {
+    locSelect.selectedIndex = 0;
+  }
+  
+  // Reset input fields
+  document.getElementById("reg-shift").selectedIndex = 0;
+  document.getElementById("reg-phone").value = "";
+  
+  const dateSelect = document.getElementById("reg-date");
+  dateSelect.innerHTML = `<option value="" disabled selected>-- กรุณาเลือกสถานที่และกะก่อน --</option>`;
+  dateSelect.disabled = true;
+  
+  const gridContainer = document.getElementById("time-slots-grid-container");
+  gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกสถานที่ กะทำงาน และวันที่ตรวจสุขภาพด้านบนก่อน</div>`;
+  STATE.selectedTimeSlot = "";
+  document.getElementById("selected-time-slot").value = "";
+  
+  profileBox.style.display = "block";
+  profileBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// --- Cancer Radio Option Card Selection ---
+function selectCancerOption(labelElement) {
+  document.querySelectorAll(".cancer-option").forEach(opt => {
+    opt.classList.remove("selected");
+  });
+  
+  labelElement.classList.add("selected");
+  const input = labelElement.querySelector('input[type="radio"]');
+  if (input) input.checked = true;
+}
+
+// --- Phone Input validation (1-4 digits) ---
+function validatePhone(input) {
+  input.value = input.value.replace(/[^0-9]/g, "");
+}
+
+// --- Shift or Location Change ---
+function onShiftOrLocationChange() {
+  const shift = document.getElementById("reg-shift").value;
+  const location = document.getElementById("reg-location").value;
+  
+  const dateSelect = document.getElementById("reg-date");
+  const gridContainer = document.getElementById("time-slots-grid-container");
+  
+  dateSelect.innerHTML = `<option value="" disabled selected>-- กรุณาเลือกสถานที่และกะก่อน --</option>`;
+  dateSelect.disabled = true;
+  gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกวันที่ตรวจสุขภาพก่อน</div>`;
+  STATE.selectedTimeSlot = "";
+  document.getElementById("selected-time-slot").value = "";
+  
+  if (!shift || !location) return;
+  
+  const matchedDates = STATE.configDates.filter(d => {
+    if (d.location !== location) return false;
+    
+    if (shift === "ทีม A") {
+      return d.team === "ทีม A";
+    } else if (shift === "ทีม B") {
+      return d.team === "ทีม B";
+    } else if (shift === "เช้าตลอด" || shift === "คร่อมกะ") {
+      return d.team === "ทีม A" || d.team === "ทีม B";
+    }
+    return false;
+  });
+  
+  if (matchedDates.length === 0) {
+    dateSelect.innerHTML = `<option value="" disabled selected>ไม่มีรอบวันเปิดตรวจสำหรับกะและสถานที่นี้</option>`;
+    return;
+  }
+  
+  dateSelect.innerHTML = `<option value="" disabled selected>-- เลือกวันที่ตรวจสุขภาพ --</option>`;
+  const uniqueDates = [...new Set(matchedDates.map(md => md.dateString))];
+  
+  uniqueDates.forEach(dateStr => {
+    const opt = document.createElement("option");
+    opt.value = dateStr;
+    opt.textContent = dateStr;
+    dateSelect.appendChild(opt);
+  });
+  
+  dateSelect.disabled = false;
+}
+
+// --- Date Change: Render Time Slot Buttons Grid ---
+function onDateChange() {
+  const dateStr = document.getElementById("reg-date").value;
+  const location = document.getElementById("reg-location").value;
+  const gridContainer = document.getElementById("time-slots-grid-container");
+  
+  gridContainer.innerHTML = "";
+  STATE.selectedTimeSlot = "";
+  document.getElementById("selected-time-slot").value = "";
+  
+  if (!dateStr || !location || !STATE.activeEmployee) return;
+  
+  const fastingSlots = ["06:00 - 06:30", "06:30 - 07:00", "07:00 - 07:30", "07:30 - 08:00", "08:00 - 08:30"];
+  const userProgramGroup = STATE.activeEmployee.programGroup;
+  
+  STATE.configTimeSlots.forEach(slot => {
+    const slotTime = slot.slotTime;
+    const limit = slot.limit;
+    
+    const key = `${location}|${dateStr}|${slotTime}`;
+    const booked = STATE.registrationCounts[key] || 0;
+    const remaining = Math.max(0, limit - booked);
+    
+    // Check if slot falls in 06:00 - 08:30 and employee is under 35 (Program 2)
+    const isFastingTime = fastingSlots.includes(slotTime);
+    const isFastingRestricted = isFastingTime && (userProgramGroup === "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี");
+    
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "time-slot-btn";
+    
+    if (isFastingRestricted) {
+      // Disable slot since this employee doesn't require fasting
+      btn.className += " disabled-fasting";
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="time-text">${slotTime}</span>
+        <span class="slot-status">เฉพาะงดน้ำ/อาหาร</span>
+      `;
+    } else if (remaining <= 0) {
+      // Disable slot since it's fully booked
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="time-text">${slotTime}</span>
+        <span class="slot-status">เต็มแล้ว (จำกัด ${limit} คน)</span>
+      `;
+    } else {
+      // Available slot button
+      btn.innerHTML = `
+        <span class="time-text">${slotTime}</span>
+        <span class="slot-status">เหลือ ${remaining}/${limit} ที่</span>
+      `;
+      btn.onclick = () => selectTimeSlot(slotTime, btn);
+    }
+    
+    gridContainer.appendChild(btn);
+  });
+}
+
+function selectTimeSlot(slotTime, buttonElement) {
+  // Remove selected styling from all buttons in grid
+  document.querySelectorAll(".time-slot-btn").forEach(btn => {
+    btn.classList.remove("selected");
+  });
+  
+  // Select clicked button
+  buttonElement.classList.add("selected");
+  
+  // Update state & hidden input validation
+  STATE.selectedTimeSlot = slotTime;
+  document.getElementById("selected-time-slot").value = slotTime;
+}
+
+// --- Submit Registration Flow ---
+async function handleRegistrationSubmit(event) {
+  event.preventDefault();
+  
+  if (!STATE.activeEmployee) {
+    showToast("กรุณาค้นหารหัสพนักงานก่อน", "warning");
+    return;
+  }
+  
+  const phone = document.getElementById("reg-phone").value.trim();
+  const shift = document.getElementById("reg-shift").value;
+  const location = document.getElementById("reg-location").value;
+  const dateStr = document.getElementById("reg-date").value;
+  const timeStr = STATE.selectedTimeSlot;
+  
+  if (!phone || phone.length < 1 || phone.length > 4) {
+    showToast("เบอร์โทรภายในต้องเป็นตัวเลข 1 - 4 หลัก", "warning");
+    return;
+  }
+  
+  if (!timeStr) {
+    showToast("กรุณาเลือกรอบเวลาตรวจสุขภาพ", "warning");
+    return;
+  }
+  
+  let cancerTest = "";
+  if (STATE.activeEmployee.programGroup === "โปรแกรม MGR") {
+    const checkedRadio = document.querySelector('input[name="cancerTest"]:checked');
+    if (!checkedRadio) {
+      showToast("กรุณาเลือกรายการตรวจมะเร็ง 1 รายการ", "warning");
+      return;
+    }
+    cancerTest = checkedRadio.value;
+  }
+  
+  const payload = {
+    employeeId: STATE.activeEmployee.employeeId,
+    firstName: STATE.activeEmployee.firstName,
+    lastName: STATE.activeEmployee.lastName,
+    department: STATE.activeEmployee.department,
+    phone: phone,
+    shift: shift,
+    location: location,
+    dateString: dateStr,
+    timeString: timeStr,
+    cancerTest: cancerTest
+  };
+  
+  showLoader("กำลังบันทึกข้อมูลลงทะเบียนตรวจสุขภาพ...");
+  
+  if (CONFIG.currentMode === "mock") {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+    
+    // Find index to update or append
+    const existingIndex = regs.findIndex(r => r.employeeId === payload.employeeId);
+    
+    // Validate slot limit locally
+    const key = `${location}|${dateStr}|${timeStr}`;
+    let isSameSlot = false;
+    if (existingIndex !== -1) {
+      const old = regs[existingIndex];
+      if (old.location === location && old.dateString === dateStr && old.timeString === timeStr) {
+        isSameSlot = true;
+      }
+    }
+    
+    const count = regs.filter(r => `${r.location}|${r.dateString}|${r.timeString}` === key).length;
+    const activeSlot = STATE.configTimeSlots.find(s => s.slotTime === timeStr);
+    const limit = activeSlot ? activeSlot.limit : 50;
+    
+    if (!isSameSlot && count >= limit) {
+      hideLoader();
+      showToast(`รอบเวลา ${timeStr} สำหรับ ${location} เต็มแล้ว!`, "error");
+      return;
+    }
+    
+    payload.timestamp = new Date().toLocaleString("th-TH");
+    
+    if (existingIndex !== -1) {
+      regs[existingIndex] = payload;
+    } else {
+      regs.push(payload);
+    }
+    
+    localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(regs));
+    await loadConfigAndCounts();
+    hideLoader();
+    showSuccessOverlay();
+    resetForm();
+  } else {
+    try {
+      const res = await callApi("saveRegistration", [payload]);
+      if (res && res.success) {
+        await loadConfigAndCounts();
+        hideLoader();
+        showSuccessOverlay();
+        resetForm();
+      } else {
+        throw new Error(res.error || "บันทึกข้อมูลล้มเหลว");
+      }
+    } catch (err) {
+      console.error(err);
+      hideLoader();
+      showToast(`เกิดข้อผิดพลาดในการลงทะเบียน: ${err.message}`, "error");
+    }
+  }
+}
+
+// --- Check Registration Status Tab Handler ---
+async function checkRegistrationStatus() {
+  const inputEl = document.getElementById("status-emp-id");
+  let empId = inputEl.value.trim();
+  
+  if (!empId) {
+    showToast("กรุณากรอกรหัสพนักงานที่ต้องการตรวจสอบ", "warning");
+    return;
+  }
+  
+  if (/^\d+$/.test(empId)) {
+    empId = empId.padStart(6, '0');
+    inputEl.value = empId;
+  }
+  
+  showLoader("กำลังค้นหาข้อมูลการลงทะเบียน...");
+  
+  if (CONFIG.currentMode === "mock") {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+    const foundReg = regs.find(r => r.employeeId === empId);
+    
+    hideLoader();
+    renderStatusCard(foundReg, empId);
+  } else {
+    try {
+      const res = await callApi("getRegistrationByEmpId", [empId]);
+      if (res && res.success) {
+        hideLoader();
+        renderStatusCard(res.data, empId);
+      } else {
+        throw new Error(res.error || "ดึงข้อมูลล้มเหลว");
+      }
+    } catch (err) {
+      console.error(err);
+      hideLoader();
+      showToast(`มีข้อผิดพลาด: ${err.message}`, "error");
+      renderStatusCard(null, empId);
+    }
+  }
+}
+
+function handleStatusSearchKeyPress(event) {
+  if (event.key === "Enter") {
+    checkRegistrationStatus();
+  }
+}
+
+function renderStatusCard(reg, searchId) {
+  const cardContainer = document.getElementById("result-card-container");
+  
+  if (!reg) {
+    showToast(`ไม่พบข้อมูลการลงทะเบียนสำหรับรหัสพนักงาน ${searchId} ในระบบ`, "error");
+    cardContainer.classList.remove("visible");
+    STATE.activeRegistration = null;
+    return;
+  }
+  
+  // Store globally to handle Edit/Cancel actions
+  STATE.activeRegistration = reg;
+  
+  // Populate Card
+  document.getElementById("card-empid-val").textContent = reg.employeeId;
+  document.getElementById("card-name-val").textContent = `${reg.firstName} ${reg.lastName}`;
+  document.getElementById("card-dept-phone-val").textContent = `${reg.department} / เบอร์ภายใน ${reg.phone}`;
+  
+  document.getElementById("card-loc-val").textContent = reg.location === "LPN1" ? "LPN1 (Lobby(เก่า) อาคาร2)" : "LPN2 (ห้องฝึกอบรมชั้น 2)";
+  document.getElementById("card-date-val").textContent = reg.dateString;
+  document.getElementById("card-time-val").textContent = `${reg.timeString} น.`;
+  
+  document.getElementById("card-program-title").textContent = reg.programGroup;
+  
+  // Render test items checklist exactly like Image 1
+  const checklistContainer = document.getElementById("card-tests-list-container");
+  checklistContainer.innerHTML = "";
+  
+  const tests = PROGRAM_TESTS[reg.programGroup] || [];
+  tests.forEach((t, index) => {
+    const item = document.createElement("div");
+    item.className = "ticket-test-item";
+    
+    // Add extra text for NPO fasting items
+    let testNameDisplay = `${index + 1}. ${t.name}`;
+    if (t.name.includes("ไขมัน") || t.name.includes("น้ำตาล")) {
+      testNameDisplay += " *งดน้ำงดอาหาร*";
+    }
+    
+    item.innerHTML = `
+      <i class="fa-solid fa-check"></i>
+      <span>${testNameDisplay}</span>
+    `;
+    checklistContainer.appendChild(item);
+  });
+  
+  // Append Selected Cancer Checkup if manager
+  if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
+    const item = document.createElement("div");
+    item.className = "ticket-test-item cancer-gold";
+    item.innerHTML = `
+      <i class="fa-solid fa-crown"></i>
+      <span>12. ${reg.cancerTest}</span>
+    `;
+    checklistContainer.appendChild(item);
+  }
+  
+  cardContainer.classList.add("visible");
+  cardContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// --- Edit Booking Action ---
+function editRegistration() {
+  if (!STATE.activeRegistration) return;
+  
+  const reg = STATE.activeRegistration;
+  
+  // Switch to Register Tab
+  switchTab("register");
+  
+  // Trigger Employee Lookup
+  const empInput = document.getElementById("reg-emp-id");
+  empInput.value = reg.employeeId;
+  
+  lookupEmployee().then(() => {
+    // Wait for employee details to load and fields to render, then populate choices
+    setTimeout(() => {
+      if (STATE.activeEmployee) {
+        document.getElementById("reg-phone").value = reg.phone;
+        document.getElementById("reg-shift").value = reg.shift;
+        document.getElementById("reg-location").value = reg.location;
+        
+        // Trigger shift change calculation
+        onShiftOrLocationChange();
+        
+        // Populate date choice
+        document.getElementById("reg-date").value = reg.dateString;
+        onDateChange();
+        
+        // Find and select the time slot button
+        setTimeout(() => {
+          const buttons = document.querySelectorAll(".time-slot-btn");
+          buttons.forEach(btn => {
+            const timeText = btn.querySelector(".time-text").textContent;
+            if (timeText === reg.timeString) {
+              selectTimeSlot(reg.timeString, btn);
+            }
+          });
+        }, 100);
+        
+        // Pre-fill cancer selection if manager
+        if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
+          const radio = document.querySelector(`input[name="cancerTest"][value="${reg.cancerTest}"]`);
+          if (radio) {
+            radio.checked = true;
+            // Highlight wrapper
+            const parentLabel = radio.closest(".cancer-option");
+            if (parentLabel) selectCancerOption(parentLabel);
+          }
+        }
+        
+        showToast("โหลดข้อมูลเดิมให้คุณแก้ไขแล้วค่ะ", "success");
+      }
+    }, 600);
+  });
+}
+
+// --- Cancel Booking Action ---
+async function cancelRegistration() {
+  if (!STATE.activeRegistration) return;
+  
+  const reg = STATE.activeRegistration;
+  const confirmCancel = confirm(`คุณต้องการยกเลิกการลงทะเบียนตรวจสุขภาพสำหรับรหัสพนักงาน ${reg.employeeId} หรือไม่?`);
+  
+  if (!confirmCancel) return;
+  
+  showLoader("กำลังยกเลิกการลงทะเบียนของคุณ...");
+  
+  if (CONFIG.currentMode === "mock") {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+    
+    // Filter out registration
+    const updatedRegs = regs.filter(r => r.employeeId !== reg.employeeId);
+    localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(updatedRegs));
+    
+    await loadConfigAndCounts();
+    hideLoader();
+    showToast("ยกเลิกการลงทะเบียนสำเร็จแล้วค่ะ", "success");
+    
+    // Hide ticket card
+    document.getElementById("result-card-container").classList.remove("visible");
+    STATE.activeRegistration = null;
+    document.getElementById("status-emp-id").value = "";
+  } else {
+    try {
+      const res = await callApi("deleteRegistration", [reg.employeeId]);
+      if (res && res.success) {
+        await loadConfigAndCounts();
+        hideLoader();
+        showToast("ยกเลิกการลงทะเบียนสำเร็จแล้วค่ะ", "success");
+        
+        document.getElementById("result-card-container").classList.remove("visible");
+        STATE.activeRegistration = null;
+        document.getElementById("status-emp-id").value = "";
+      } else {
+        throw new Error(res.error || "ไม่สามารถยกเลิกได้");
+      }
+    } catch (err) {
+      console.error(err);
+      hideLoader();
+      showToast(`มีข้อผิดพลาดในการยกเลิก: ${err.message}`, "error");
+    }
+  }
+}
+
+// --- Helper Functions: Reset, Alerts, API Client ---
+function resetForm() {
+  document.getElementById("health-registration-form").reset();
+  document.getElementById("employee-profile-box").style.display = "none";
+  document.getElementById("selected-time-slot").value = "";
+  STATE.activeEmployee = null;
+  STATE.selectedTimeSlot = "";
+}
+
+function showToast(text, type = "info") {
+  const toast = document.getElementById("toast-msg");
+  const icon = document.getElementById("toast-icon");
+  const textEl = document.getElementById("toast-text");
+  
+  toast.className = "toast-msg";
+  icon.className = "fa-solid";
+  
+  if (type === "success") {
+    toast.classList.add("success");
+    icon.classList.add("fa-circle-check");
+  } else if (type === "error") {
+    toast.classList.add("error");
+    icon.classList.add("fa-circle-xmark");
+  } else if (type === "warning") {
+    toast.classList.add("warning");
+    icon.classList.add("fa-triangle-exclamation");
+  } else {
+    toast.classList.add("info");
+    icon.classList.add("fa-circle-info");
+  }
+  
+  textEl.textContent = text;
+  toast.classList.add("show");
+  
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 4000);
+}
+
+function showLoader(message = "กำลังประมวลผล...") {
+  document.getElementById("loading-text").textContent = message;
+  document.getElementById("loading-overlay").classList.add("active");
+}
+
+function hideLoader() {
+  document.getElementById("loading-overlay").classList.remove("active");
+}
+
+function showSuccessOverlay() {
+  document.getElementById("success-overlay").classList.add("active");
+}
+
+function closeSuccessOverlay() {
+  document.getElementById("success-overlay").classList.remove("active");
+}
+
+async function callApi(action, args) {
+  if (!CONFIG.apiUrl || CONFIG.apiUrl.includes("your_deployed_url")) {
+    showToast("กรุณาติดตั้ง Web App URL ของ Google Sheets ในไฟล์ app.js ก่อน", "error");
+    return { success: false, error: "API URL not configured" };
+  }
+  
+  try {
+    const payload = {
+      action: action,
+      args: args
+    };
+    
+    const response = await fetch(CONFIG.apiUrl, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    return result;
+  } catch (err) {
+    console.error("API Call error:", err);
+    throw err;
+  }
+}
