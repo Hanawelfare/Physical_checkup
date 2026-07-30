@@ -71,9 +71,9 @@
         <div class="form-grid">
           <!-- Employee ID Lookup -->
           <div class="form-group full-width">
-            <label for="reg-emp-id"><i class="fa-solid fa-id-badge"></i> รหัสพนักงาน (มีเลข 0 นำหน้าเสมอ เช่น 003049)</label>
+            <label for="reg-emp-id"><i class="fa-solid fa-id-badge"></i> รหัสพนักงาน (มีเลข 0 นำหน้าเสมอ เช่น 012345)</label>
             <div class="search-input-wrapper">
-              <input type="text" id="reg-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 003049" required>
+              <input type="text" id="reg-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 012345" required>
               <button type="button" class="btn-search" onclick="lookupEmployee()">
                 <i class="fa-solid fa-magnifying-glass"></i> ค้นหาข้อมูล
               </button>
@@ -213,7 +213,7 @@
         <h2><i class="fa-solid fa-search"></i> ค้นหาผลการลงทะเบียนของคุณ</h2>
         <p>กรอกรหัสพนักงาน (จะมีเลข 0 ข้างหน้าเสมอ) เพื่อดูรายละเอียดบัตรลงทะเบียน</p>
         <div class="search-input-wrapper" style="max-width: 450px; margin: 0 auto;">
-          <input type="text" id="status-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 003049" onkeypress="handleStatusSearchKeyPress(event)">
+          <input type="text" id="status-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 012345" onkeypress="handleStatusSearchKeyPress(event)">
           <button type="button" class="btn-search" onclick="checkRegistrationStatus()">
             <i class="fa-solid fa-magnifying-glass"></i> ตรวจสอบข้อมูล
           </button>
@@ -240,7 +240,7 @@
             <div class="ticket-personal-grid">
               <div class="ticket-info-block">
                 <span class="lbl">รหัสพนักงาน</span>
-                <span class="val" id="card-empid-val">003049</span>
+                <span class="val" id="card-empid-val">012345</span>
               </div>
               <div class="ticket-info-block">
                 <span class="lbl">ชื่อ - นามสกุล</span>
