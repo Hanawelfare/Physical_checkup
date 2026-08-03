@@ -423,6 +423,26 @@ select:disabled {
   margin-left: auto;
 }
 
+/* --- Risk Factor Items --- */
+.checkup-item.risk-item {
+  border-left: 4px solid var(--warning-color);
+  background: #fffbeb !important; /* Light amber background */
+}
+
+.checkup-item.risk-item i {
+  color: var(--warning-color);
+}
+
+.risk-badge {
+  background: var(--warning-color);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
 /* --- Cancer Selection Section (MGR) --- */
 .cancer-selection-wrapper {
   margin-top: 20px;
@@ -479,6 +499,75 @@ select:disabled {
 .cancer-option-name {
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.label-row-slots {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.label-row-slots label {
+  margin-bottom: 0 !important;
+}
+
+.realtime-sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--success-color);
+  background: var(--success-bg);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.realtime-sync-status.syncing {
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  border-color: var(--border-light);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+}
+
+.pulse-dot::after {
+  content: '';
+  width: 100%;
+  height: 100%;
+  background-color: inherit;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
 }
 
 /* --- Time Slots Grid (Buttons) --- */
@@ -847,6 +936,17 @@ select:disabled {
 }
 
 .ticket-test-item.cancer-gold i {
+  color: var(--warning-color);
+}
+
+.ticket-test-item.ticket-risk-item {
+  color: var(--warning-color);
+  font-weight: 600;
+  border-left: 2px solid var(--warning-color);
+  padding-left: 6px;
+}
+
+.ticket-test-item.ticket-risk-item i {
   color: var(--warning-color);
 }
 
