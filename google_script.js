@@ -104,6 +104,7 @@ function getEmployeeData(employeeId) {
   var colLoc = headers.indexOf("สถานที่");
   var colProg = headers.indexOf("โปรแกรมตรวจ");
   var colAge = headers.indexOf("อายุ");
+  var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
   
   if (colId === -1) throw new Error("Header 'รหัสพนักงาน' not found in Name sheet.");
   
@@ -121,6 +122,7 @@ function getEmployeeData(employeeId) {
       var deptVal = colDept !== -1 ? String(row[colDept]).trim() : "";
       var locVal = colLoc !== -1 ? String(row[colLoc]).trim() : "";
       var progVal = colProg !== -1 ? String(row[colProg]).trim() : "";
+      var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
       
       // Separate program group based on age and program name
       var programGroup = "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี";
@@ -138,7 +140,8 @@ function getEmployeeData(employeeId) {
         defaultLocation: locVal,
         programName: progVal,
         age: ageVal,
-        programGroup: programGroup
+        programGroup: programGroup,
+        riskProgram: riskVal
       };
     }
   }
@@ -234,8 +237,26 @@ function saveRegistration(regData) {
       regSheet = ss.insertSheet("Registration");
       regSheet.appendRow([
         "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "เบอร์โทรภายใน", 
-        "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "Timestamp"
+        "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "Timestamp"
       ]);
+      regSheet.getRange("A1:L1").setFontWeight("bold").setBackground("#d9ead3");
+    } else {
+      // Dynamic migration: check if 'โปรแกรมปัจจัยเสี่ยง' exists, if not, insert it before Timestamp
+      var rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+      var colRiskIdx = rHeaders.indexOf("โปรแกรมปัจจัยเสี่ยง");
+      if (colRiskIdx === -1) {
+        var timeIdx = rHeaders.indexOf("Timestamp");
+        if (timeIdx !== -1) {
+          regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
+          regSheet.getRange(1, timeIdx + 1).setValue("โปรแกรมปัจจัยเสี่ยง");
+          regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
+        } else {
+          // Append to the end
+          regSheet.insertColumnAfter(rHeaders.length);
+          regSheet.getRange(1, rHeaders.length + 1).setValue("โปรแกรมปัจจัยเสี่ยง");
+          regSheet.getRange(1, rHeaders.length + 1).setFontWeight("bold").setBackground("#d9ead3");
+        }
+      }
     }
     
     var employeeId = String(regData.employeeId).trim();
@@ -299,6 +320,7 @@ function saveRegistration(regData) {
       regData.dateString,
       regData.timeString,
       regData.cancerTest || "",
+      regData.riskProgram || "",
       timestampStr
     ];
     
@@ -339,6 +361,7 @@ function getRegistrationByEmpId(employeeId) {
   var colDate = headers.indexOf("วันที่ตรวจ");
   var colTime = headers.indexOf("เวลาที่ตรวจ");
   var colCancer = headers.indexOf("รายการตรวจมะเร็งที่เลือก");
+  var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
   var colTimeCreated = headers.indexOf("Timestamp");
   
   if (colId === -1) return null;
@@ -364,6 +387,7 @@ function getRegistrationByEmpId(employeeId) {
         dateString: colDate !== -1 ? String(data[i][colDate]).trim() : "",
         timeString: colTime !== -1 ? String(data[i][colTime]).trim() : "",
         cancerTest: colCancer !== -1 ? String(data[i][colCancer]).trim() : "",
+        riskProgram: colRisk !== -1 ? String(data[i][colRisk]).trim() : "",
         timestamp: colTimeCreated !== -1 ? String(data[i][colTimeCreated]).trim() : ""
       };
     }
@@ -490,11 +514,11 @@ function initializeSheets() {
     timesSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#fce5cd");
     
     var defaultTimes = [
-      ["06:00 - 06:30", 350],
-      ["06:30 - 07:00", 350],
-      ["07:00 - 07:30", 350],
-      ["07:30 - 08:00", 350],
-      ["08:00 - 08:30", 350],
+      ["06:00 - 06:30", 70],
+      ["06:30 - 07:00", 70],
+      ["07:00 - 07:30", 70],
+      ["07:30 - 08:00", 70],
+      ["08:00 - 08:30", 70],
       ["08:30 - 09:00", 50],
       ["09:00 - 09:30", 50],
       ["09:30 - 10:00", 50],
@@ -518,10 +542,11 @@ function initializeSheets() {
     regSheet = ss.insertSheet("Registration");
     regSheet.appendRow([
       "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "เบอร์โทรภายใน", 
-      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "Timestamp"
+      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "Timestamp"
     ]);
-    regSheet.getRange("A1:K1").setFontWeight("bold").setBackground("#d9ead3");
+    regSheet.getRange("A1:L1").setFontWeight("bold").setBackground("#d9ead3");
   }
   
   return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', and 'Registration' sheets created/verified.";
 }
+
