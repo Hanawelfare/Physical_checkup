@@ -54,7 +54,7 @@ const PROGRAM_TESTS = {
 // --- Mock Data for Offline Mode ---
 const MOCK_EMPLOYEES = [
   { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี" },
+  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี", isPregnant: true },
   { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว" },
   { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
   { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
@@ -238,40 +238,7 @@ function handleEmployeeLookupResult(employee) {
   document.getElementById("profile-program-group").textContent = programGroup;
   
   // Populate checkup items grid
-  const itemsList = document.getElementById("checkup-items-list");
-  itemsList.innerHTML = "";
-  
-  const tests = PROGRAM_TESTS[programGroup] || [];
-  tests.forEach((t, i) => {
-    const item = document.createElement("div");
-    item.className = t.npo ? "checkup-item npo" : "checkup-item";
-    
-    let iconClass = t.npo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
-    let extraSpan = t.npo ? `<span class="npo-badge">งดน้ำ-งดอาหาร</span>` : "";
-    
-    item.innerHTML = `
-      <i class="${iconClass}"></i>
-      <span>${i + 1}. ${t.name}</span>
-      ${extraSpan}
-    `;
-    itemsList.appendChild(item);
-  });
-  
-  // Append Custom Risk Factor checkups
-  const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
-  if (riskItems.length > 0) {
-    const startIdx = tests.length + 1;
-    riskItems.forEach((riskText, idx) => {
-      const item = document.createElement("div");
-      item.className = "checkup-item risk-item";
-      item.innerHTML = `
-        <i class="fa-solid fa-stethoscope"></i>
-        <span>${startIdx + idx}. ${riskText}</span>
-        <span class="risk-badge">ปัจจัยเสี่ยง</span>
-      `;
-      itemsList.appendChild(item);
-    });
-  }
+  renderCheckupList(employee, !!employee.isPregnant);
   
   // Handle Cancer selection for MGR
   const cancerSelectionWrapper = document.getElementById("cancer-selection-wrapper");
@@ -313,6 +280,58 @@ function handleEmployeeLookupResult(employee) {
   profileBox.style.display = "block";
   profileBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+
+// --- Render checkup list dynamically ---
+function renderCheckupList(employee, isPregnant = false) {
+  const itemsList = document.getElementById("checkup-items-list");
+  itemsList.innerHTML = "";
+  
+  const programGroup = employee.programGroup;
+  const tests = PROGRAM_TESTS[programGroup] || [];
+  
+  tests.forEach((t, i) => {
+    const item = document.createElement("div");
+    const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
+    
+    if (isXray && isPregnant) {
+      item.className = "checkup-item pregnancy-disabled";
+      item.innerHTML = `
+        <i class="fa-solid fa-circle-xmark"></i>
+        <span>${i + 1}. ${t.name} (งดตรวจเนื่องจากตั้งครรภ์)</span>
+        <span class="pregnancy-badge">งดตรวจ</span>
+      `;
+    } else {
+      item.className = t.npo ? "checkup-item npo" : "checkup-item";
+      let iconClass = t.npo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
+      let extraSpan = t.npo ? `<span class="npo-badge">งดน้ำ-งดอาหาร</span>` : "";
+      
+      item.innerHTML = `
+        <i class="${iconClass}"></i>
+        <span>${i + 1}. ${t.name}</span>
+        ${extraSpan}
+      `;
+    }
+    itemsList.appendChild(item);
+  });
+  
+  // Append Custom Risk Factor checkups
+  const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (riskItems.length > 0) {
+    const startIdx = tests.length + 1;
+    riskItems.forEach((riskText, idx) => {
+      const item = document.createElement("div");
+      item.className = "checkup-item risk-item";
+      item.innerHTML = `
+        <i class="fa-solid fa-stethoscope"></i>
+        <span>${startIdx + idx}. ${riskText}</span>
+        <span class="risk-badge">ปัจจัยเสี่ยง</span>
+      `;
+      itemsList.appendChild(item);
+    });
+  }
+}
+
+
 
 // --- Cancer Radio Option Card Selection ---
 function selectCancerOption(labelElement) {
@@ -512,6 +531,7 @@ async function handleRegistrationSubmit(event) {
     cancerTest = checkedRadio.value;
   }
   
+  const isPregnant = !!STATE.activeEmployee.isPregnant;
   const payload = {
     employeeId: STATE.activeEmployee.employeeId,
     firstName: STATE.activeEmployee.firstName,
@@ -523,7 +543,8 @@ async function handleRegistrationSubmit(event) {
     dateString: dateStr,
     timeString: timeStr,
     cancerTest: cancerTest,
-    riskProgram: STATE.activeEmployee.riskProgram || ""
+    riskProgram: STATE.activeEmployee.riskProgram || "",
+    isPregnant: isPregnant
   };
   
   showLoader("กำลังบันทึกข้อมูลลงทะเบียนตรวจสุขภาพ...");
@@ -685,18 +706,28 @@ function renderStatusCard(reg, searchId) {
   const tests = PROGRAM_TESTS[reg.programGroup] || [];
   tests.forEach((t, index) => {
     const item = document.createElement("div");
-    item.className = "ticket-test-item";
+    const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
     
-    // Add extra text for NPO fasting items
-    let testNameDisplay = `${index + 1}. ${t.name}`;
-    if (t.name.includes("ไขมัน") || t.name.includes("น้ำตาล")) {
-      testNameDisplay += " *งดน้ำงดอาหาร*";
+    if (isXray && reg.isPregnant) {
+      item.className = "ticket-test-item ticket-pregnancy-disabled";
+      item.innerHTML = `
+        <i class="fa-solid fa-circle-xmark"></i>
+        <span>${index + 1}. ${t.name} *งดตรวจเนื่องจากตั้งครรภ์*</span>
+      `;
+    } else {
+      item.className = "ticket-test-item";
+      
+      // Add extra text for NPO fasting items
+      let testNameDisplay = `${index + 1}. ${t.name}`;
+      if (t.name.includes("ไขมัน") || t.name.includes("น้ำตาล")) {
+        testNameDisplay += " *งดน้ำงดอาหาร*";
+      }
+      
+      item.innerHTML = `
+        <i class="fa-solid fa-check"></i>
+        <span>${testNameDisplay}</span>
+      `;
     }
-    
-    item.innerHTML = `
-      <i class="fa-solid fa-check"></i>
-      <span>${testNameDisplay}</span>
-    `;
     checklistContainer.appendChild(item);
   });
   
@@ -778,6 +809,9 @@ function editRegistration() {
             if (parentLabel) selectCancerOption(parentLabel);
           }
         }
+        
+        // Render checkup list according to saved pregnancy status
+        renderCheckupList(STATE.activeEmployee, !!reg.isPregnant);
         
         showToast("โหลดข้อมูลเดิมให้คุณแก้ไขแล้วค่ะ", "success");
       }
