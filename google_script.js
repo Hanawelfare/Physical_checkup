@@ -106,6 +106,15 @@ function getEmployeeData(employeeId) {
   var colAge = headers.indexOf("อายุ");
   var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
   
+  // Find pregnancy column dynamically by checking if header contains "ตั้งครรภ์"
+  var colPreg = -1;
+  for (var h = 0; h < headers.length; h++) {
+    if (headers[h].indexOf("ตั้งครรภ์") !== -1) {
+      colPreg = h;
+      break;
+    }
+  }
+  
   if (colId === -1) throw new Error("Header 'รหัสพนักงาน' not found in Name sheet.");
   
   for (var i = 1; i < data.length; i++) {
@@ -123,6 +132,8 @@ function getEmployeeData(employeeId) {
       var locVal = colLoc !== -1 ? String(row[colLoc]).trim() : "";
       var progVal = colProg !== -1 ? String(row[colProg]).trim() : "";
       var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
+      var pregVal = colPreg !== -1 ? String(row[colPreg]).trim().toLowerCase() : "";
+      var isPregnant = (pregVal === "yes" || pregVal === "y" || pregVal.indexOf("ตั้งครรภ์") !== -1 || pregVal === "จริง" || pregVal === "มี");
       
       // Separate program group based on age and program name
       var programGroup = "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี";
@@ -141,7 +152,8 @@ function getEmployeeData(employeeId) {
         programName: progVal,
         age: ageVal,
         programGroup: programGroup,
-        riskProgram: riskVal
+        riskProgram: riskVal,
+        isPregnant: isPregnant
       };
     }
   }
@@ -237,12 +249,13 @@ function saveRegistration(regData) {
       regSheet = ss.insertSheet("Registration");
       regSheet.appendRow([
         "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "เบอร์โทรภายใน", 
-        "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "Timestamp"
+        "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "ตั้งครรภ์", "Timestamp"
       ]);
-      regSheet.getRange("A1:L1").setFontWeight("bold").setBackground("#d9ead3");
+      regSheet.getRange("A1:M1").setFontWeight("bold").setBackground("#d9ead3");
     } else {
-      // Dynamic migration: check if 'โปรแกรมปัจจัยเสี่ยง' exists, if not, insert it before Timestamp
+      // Dynamic migration: check if 'โปรแกรมปัจจัยเสี่ยง' and 'ตั้งครรภ์' exist, if not, insert before Timestamp
       var rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+      
       var colRiskIdx = rHeaders.indexOf("โปรแกรมปัจจัยเสี่ยง");
       if (colRiskIdx === -1) {
         var timeIdx = rHeaders.indexOf("Timestamp");
@@ -250,11 +263,18 @@ function saveRegistration(regData) {
           regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
           regSheet.getRange(1, timeIdx + 1).setValue("โปรแกรมปัจจัยเสี่ยง");
           regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
-        } else {
-          // Append to the end
-          regSheet.insertColumnAfter(rHeaders.length);
-          regSheet.getRange(1, rHeaders.length + 1).setValue("โปรแกรมปัจจัยเสี่ยง");
-          regSheet.getRange(1, rHeaders.length + 1).setFontWeight("bold").setBackground("#d9ead3");
+          // Refresh headers array for subsequent checks
+          rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+        }
+      }
+      
+      var colPregIdx = rHeaders.indexOf("ตั้งครรภ์");
+      if (colPregIdx === -1) {
+        var timeIdx = rHeaders.indexOf("Timestamp");
+        if (timeIdx !== -1) {
+          regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
+          regSheet.getRange(1, timeIdx + 1).setValue("ตั้งครรภ์");
+          regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
         }
       }
     }
@@ -321,6 +341,7 @@ function saveRegistration(regData) {
       regData.timeString,
       regData.cancerTest || "",
       regData.riskProgram || "",
+      regData.isPregnant ? "Yes" : "",
       timestampStr
     ];
     
@@ -362,6 +383,7 @@ function getRegistrationByEmpId(employeeId) {
   var colTime = headers.indexOf("เวลาที่ตรวจ");
   var colCancer = headers.indexOf("รายการตรวจมะเร็งที่เลือก");
   var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
+  var colPreg = headers.indexOf("ตั้งครรภ์");
   var colTimeCreated = headers.indexOf("Timestamp");
   
   if (colId === -1) return null;
@@ -388,6 +410,7 @@ function getRegistrationByEmpId(employeeId) {
         timeString: colTime !== -1 ? String(data[i][colTime]).trim() : "",
         cancerTest: colCancer !== -1 ? String(data[i][colCancer]).trim() : "",
         riskProgram: colRisk !== -1 ? String(data[i][colRisk]).trim() : "",
+        isPregnant: colPreg !== -1 ? String(data[i][colPreg]).trim() === "Yes" : false,
         timestamp: colTimeCreated !== -1 ? String(data[i][colTimeCreated]).trim() : ""
       };
     }
@@ -542,9 +565,9 @@ function initializeSheets() {
     regSheet = ss.insertSheet("Registration");
     regSheet.appendRow([
       "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "เบอร์โทรภายใน", 
-      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "Timestamp"
+      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "ตั้งครรภ์", "Timestamp"
     ]);
-    regSheet.getRange("A1:L1").setFontWeight("bold").setBackground("#d9ead3");
+    regSheet.getRange("A1:M1").setFontWeight("bold").setBackground("#d9ead3");
   }
   
   return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', and 'Registration' sheets created/verified.";
