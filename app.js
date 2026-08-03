@@ -53,18 +53,18 @@ const PROGRAM_TESTS = {
 
 // --- Mock Data for Offline Mode ---
 const MOCK_EMPLOYEES = [
-  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, programGroup: "โปรแกรม MGR" },
-  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR" },
-  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" },
-  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR" },
-  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, programGroup: "โปรแกรม MGR" },
-  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, programGroup: "โปรแกรม MGR" },
-  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี" }
+  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี" },
+  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว" },
+  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR", riskProgram: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG), ตรวจสมรรถภาพปอด" },
+  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "" }
 ];
 
 const MOCK_CONFIG_DATES = [
@@ -108,6 +108,7 @@ if (!localStorage.getItem("MOCK_REGISTRATIONS")) {
 document.addEventListener("DOMContentLoaded", () => {
   setupModeSelector();
   loadConfigAndCounts();
+  initRealTimeSync();
 });
 
 function setupModeSelector() {
@@ -256,6 +257,22 @@ function handleEmployeeLookupResult(employee) {
     itemsList.appendChild(item);
   });
   
+  // Append Custom Risk Factor checkups
+  const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (riskItems.length > 0) {
+    const startIdx = tests.length + 1;
+    riskItems.forEach((riskText, idx) => {
+      const item = document.createElement("div");
+      item.className = "checkup-item risk-item";
+      item.innerHTML = `
+        <i class="fa-solid fa-stethoscope"></i>
+        <span>${startIdx + idx}. ${riskText}</span>
+        <span class="risk-badge">ปัจจัยเสี่ยง</span>
+      `;
+      itemsList.appendChild(item);
+    });
+  }
+  
   // Handle Cancer selection for MGR
   const cancerSelectionWrapper = document.getElementById("cancer-selection-wrapper");
   const radioButtons = document.querySelectorAll('input[name="cancerTest"]');
@@ -362,15 +379,31 @@ function onShiftOrLocationChange() {
 
 // --- Date Change: Render Time Slot Buttons Grid ---
 function onDateChange() {
+  renderTimeSlots(false); // Reset selection when date is manually changed
+}
+
+function renderTimeSlots(preserveSelection = false) {
   const dateStr = document.getElementById("reg-date").value;
   const location = document.getElementById("reg-location").value;
   const gridContainer = document.getElementById("time-slots-grid-container");
   
-  gridContainer.innerHTML = "";
-  STATE.selectedTimeSlot = "";
-  document.getElementById("selected-time-slot").value = "";
+  if (!dateStr || !location || !STATE.activeEmployee) {
+    gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกสถานที่ กะทำงาน และวันที่ตรวจสุขภาพด้านบนก่อน เพื่อดึงข้อมูลรอบเวลาว่าง</div>`;
+    if (!preserveSelection) {
+      STATE.selectedTimeSlot = "";
+      document.getElementById("selected-time-slot").value = "";
+    }
+    return;
+  }
   
-  if (!dateStr || !location || !STATE.activeEmployee) return;
+  const prevSelectedSlot = STATE.selectedTimeSlot;
+  
+  if (!preserveSelection) {
+    STATE.selectedTimeSlot = "";
+    document.getElementById("selected-time-slot").value = "";
+  }
+  
+  gridContainer.innerHTML = "";
   
   const fastingSlots = ["06:00 - 06:30", "06:30 - 07:00", "07:00 - 07:30", "07:30 - 08:00", "08:00 - 08:30"];
   const userProgramGroup = STATE.activeEmployee.programGroup;
@@ -406,6 +439,12 @@ function onDateChange() {
         <span class="time-text">${slotTime}</span>
         <span class="slot-status">เต็มแล้ว (จำกัด ${limit} คน)</span>
       `;
+      // If the slot is now full, but was previously selected, clear selection and notify
+      if (preserveSelection && prevSelectedSlot === slotTime) {
+        STATE.selectedTimeSlot = "";
+        document.getElementById("selected-time-slot").value = "";
+        showToast(`รอบเวลา ${slotTime} เต็มแล้วค่ะ ระบบทำการยกเลิกตัวเลือกเดิมของท่าน`, "warning");
+      }
     } else {
       // Available slot button
       btn.innerHTML = `
@@ -413,6 +452,11 @@ function onDateChange() {
         <span class="slot-status">เหลือ ${remaining}/${limit} ที่</span>
       `;
       btn.onclick = () => selectTimeSlot(slotTime, btn);
+      
+      // Restore selection if matching
+      if (preserveSelection && prevSelectedSlot === slotTime) {
+        btn.classList.add("selected");
+      }
     }
     
     gridContainer.appendChild(btn);
@@ -478,7 +522,8 @@ async function handleRegistrationSubmit(event) {
     location: location,
     dateString: dateStr,
     timeString: timeStr,
-    cancerTest: cancerTest
+    cancerTest: cancerTest,
+    riskProgram: STATE.activeEmployee.riskProgram || ""
   };
   
   showLoader("กำลังบันทึกข้อมูลลงทะเบียนตรวจสุขภาพ...");
@@ -524,20 +569,39 @@ async function handleRegistrationSubmit(event) {
     showSuccessOverlay();
     resetForm();
   } else {
-    try {
-      const res = await callApi("saveRegistration", [payload]);
-      if (res && res.success) {
-        await loadConfigAndCounts();
-        hideLoader();
-        showSuccessOverlay();
-        resetForm();
-      } else {
-        throw new Error(res.error || "บันทึกข้อมูลล้มเหลว");
+    let retries = 3;
+    let saved = false;
+    let attempt = 0;
+    
+    while (attempt < retries && !saved) {
+      attempt++;
+      try {
+        if (attempt > 1) {
+          showLoader(`ระบบหนาแน่นชั่วคราว กำลังพยายามอีกครั้ง (รอบที่ ${attempt}/${retries})...`);
+          await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds before retry
+        }
+        
+        const res = await callApi("saveRegistration", [payload]);
+        if (res && res.success) {
+          saved = true;
+          await loadConfigAndCounts();
+          hideLoader();
+          showSuccessOverlay();
+          resetForm();
+        } else if (res && res.error && (res.error.includes("Lock timeout") || res.error.includes("หนาแน่น") || res.error.includes("limit exceeded"))) {
+          console.warn(`Attempt ${attempt} failed with lock timeout: ${res.error}`);
+          if (attempt >= retries) throw new Error(res.error);
+        } else {
+          throw new Error(res.error || "บันทึกข้อมูลล้มเหลว");
+        }
+      } catch (err) {
+        if (attempt >= retries) {
+          console.error(err);
+          hideLoader();
+          showToast(`เกิดข้อผิดพลาดในการลงทะเบียน: ${err.message}`, "error");
+          break;
+        }
       }
-    } catch (err) {
-      console.error(err);
-      hideLoader();
-      showToast(`เกิดข้อผิดพลาดในการลงทะเบียน: ${err.message}`, "error");
     }
   }
 }
@@ -636,13 +700,27 @@ function renderStatusCard(reg, searchId) {
     checklistContainer.appendChild(item);
   });
   
+  // Append Custom Risk Factor checkups on Ticket
+  const riskItems = reg.riskProgram ? reg.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
+  let currentIdx = tests.length + 1;
+  riskItems.forEach((riskText) => {
+    const item = document.createElement("div");
+    item.className = "ticket-test-item ticket-risk-item";
+    item.innerHTML = `
+      <i class="fa-solid fa-stethoscope"></i>
+      <span>${currentIdx}. ${riskText} *ปัจจัยเสี่ยง*</span>
+    `;
+    checklistContainer.appendChild(item);
+    currentIdx++;
+  });
+  
   // Append Selected Cancer Checkup if manager
   if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
     const item = document.createElement("div");
     item.className = "ticket-test-item cancer-gold";
     item.innerHTML = `
       <i class="fa-solid fa-crown"></i>
-      <span>12. ${reg.cancerTest}</span>
+      <span>${currentIdx}. ${reg.cancerTest}</span>
     `;
     checklistContainer.appendChild(item);
   }
@@ -735,23 +813,42 @@ async function cancelRegistration() {
     STATE.activeRegistration = null;
     document.getElementById("status-emp-id").value = "";
   } else {
-    try {
-      const res = await callApi("deleteRegistration", [reg.employeeId]);
-      if (res && res.success) {
-        await loadConfigAndCounts();
-        hideLoader();
-        showToast("ยกเลิกการลงทะเบียนสำเร็จแล้วค่ะ", "success");
+    let retries = 3;
+    let deleted = false;
+    let attempt = 0;
+    
+    while (attempt < retries && !deleted) {
+      attempt++;
+      try {
+        if (attempt > 1) {
+          showLoader(`ระบบหนาแน่นชั่วคราว กำลังพยายามอีกครั้ง (รอบที่ ${attempt}/${retries})...`);
+          await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds before retry
+        }
         
-        document.getElementById("result-card-container").classList.remove("visible");
-        STATE.activeRegistration = null;
-        document.getElementById("status-emp-id").value = "";
-      } else {
-        throw new Error(res.error || "ไม่สามารถยกเลิกได้");
+        const res = await callApi("deleteRegistration", [reg.employeeId]);
+        if (res && res.success) {
+          deleted = true;
+          await loadConfigAndCounts();
+          hideLoader();
+          showToast("ยกเลิกการลงทะเบียนสำเร็จแล้วค่ะ", "success");
+          
+          document.getElementById("result-card-container").classList.remove("visible");
+          STATE.activeRegistration = null;
+          document.getElementById("status-emp-id").value = "";
+        } else if (res && res.error && (res.error.includes("Lock timeout") || res.error.includes("หนาแน่น") || res.error.includes("limit exceeded"))) {
+          console.warn(`Attempt ${attempt} failed with lock timeout: ${res.error}`);
+          if (attempt >= retries) throw new Error(res.error);
+        } else {
+          throw new Error(res.error || "ไม่สามารถยกเลิกได้");
+        }
+      } catch (err) {
+        if (attempt >= retries) {
+          console.error(err);
+          hideLoader();
+          showToast(`มีข้อผิดพลาดในการยกเลิก: ${err.message}`, "error");
+          break;
+        }
       }
-    } catch (err) {
-      console.error(err);
-      hideLoader();
-      showToast(`มีข้อผิดพลาดในการยกเลิก: ${err.message}`, "error");
     }
   }
 }
@@ -844,3 +941,95 @@ async function callApi(action, args) {
     throw err;
   }
 }
+
+// --- Real-time Synchronisation Manager ---
+const SYNC_CONFIG = {
+  minIntervalMs: 6000,
+  maxIntervalMs: 9000,
+  timerId: null,
+  isSyncing: false
+};
+
+function initRealTimeSync() {
+  if (SYNC_CONFIG.timerId) clearTimeout(SYNC_CONFIG.timerId);
+  
+  // Start the dynamic scheduling loop
+  scheduleNextSync();
+}
+
+function scheduleNextSync() {
+  // Generate random jittered interval (e.g. between 6s and 9s) to distribute server load
+  const jitteredInterval = Math.floor(Math.random() * (SYNC_CONFIG.maxIntervalMs - SYNC_CONFIG.minIntervalMs + 1)) + SYNC_CONFIG.minIntervalMs;
+  
+  SYNC_CONFIG.timerId = setTimeout(async () => {
+    // Only run sync if page is visible and user is actively looking at slot options
+    if (!document.hidden && shouldSyncCounts()) {
+      SYNC_CONFIG.isSyncing = true;
+      try {
+        await performBackgroundSync();
+      } catch (err) {
+        console.warn("Background sync failed:", err);
+      } finally {
+        SYNC_CONFIG.isSyncing = false;
+      }
+    }
+    // Loop
+    scheduleNextSync();
+  }, jitteredInterval);
+}
+
+function shouldSyncCounts() {
+  // Only poll if on registration tab and date/location are selected (user looking at slots grid)
+  const regTab = document.getElementById("tab-register");
+  const isRegTabActive = regTab && regTab.classList.contains("active");
+  if (!isRegTabActive) return false;
+  
+  const dateStr = document.getElementById("reg-date").value;
+  const location = document.getElementById("reg-location").value;
+  return !!(dateStr && location && STATE.activeEmployee);
+}
+
+async function performBackgroundSync() {
+  if (CONFIG.currentMode === "mock") {
+    // Read from local mock registry in LocalStorage
+    const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+    STATE.registrationCounts = {};
+    regs.forEach(r => {
+      const key = `${r.location}|${r.dateString}|${r.timeString}`;
+      STATE.registrationCounts[key] = (STATE.registrationCounts[key] || 0) + 1;
+    });
+    // Trigger in-place update of slots grid
+    renderTimeSlots(true);
+    pulseRealtimeIndicator();
+  } else {
+    // Call Google Sheets API silently (without displaying full page blocker loader)
+    const response = await callApi("getConfigAndSlots", []);
+    if (response && response.success) {
+      STATE.configDates = response.data.dates;
+      STATE.configTimeSlots = response.data.timeSlots;
+      STATE.registrationCounts = response.data.registrationCounts;
+      // Trigger in-place update of slots grid
+      renderTimeSlots(true);
+      pulseRealtimeIndicator();
+    }
+  }
+}
+
+function pulseRealtimeIndicator() {
+  const badge = document.getElementById("realtime-sync-status");
+  if (!badge) return;
+  
+  badge.classList.add("syncing");
+  const text = badge.querySelector(".sync-text");
+  const dot = badge.querySelector(".pulse-dot");
+  
+  if (text) text.textContent = "อัปเดตล่าสุด: เมื่อครู่";
+  if (dot) dot.style.backgroundColor = "var(--primary-dark)";
+  
+  setTimeout(() => {
+    badge.classList.remove("syncing");
+    if (text) text.textContent = "เชื่อมต่อเรียลไทม์";
+    if (dot) dot.style.backgroundColor = "var(--success-color)";
+  }, 1500);
+}
+
