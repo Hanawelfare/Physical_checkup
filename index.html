@@ -57,6 +57,9 @@
       <button class="tab-btn" id="tab-btn-status" onclick="switchTab('status')">
         <i class="fa-solid fa-address-card"></i> ตรวจสอบผลการลงทะเบียน
       </button>
+      <button class="tab-btn" id="tab-btn-special-catalog" onclick="switchTab('special-catalog')">
+        <i class="fa-solid fa-notes-medical"></i> รายการตรวจพิเศษ (ชำระเอง)
+      </button>
     </nav>
 
     <!-- TAB 1: REGISTRATION -->
@@ -73,7 +76,7 @@
           <div class="form-group full-width">
             <label for="reg-emp-id"><i class="fa-solid fa-id-badge"></i> รหัสพนักงาน (มีเลข 0 นำหน้าเสมอ เช่น 012345)</label>
             <div class="search-input-wrapper">
-              <input type="text" id="reg-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 012345" required>
+              <input type="text" id="reg-emp-id" placeholder="กรอกรหัสพนักงาน เช่น 012345" required onkeypress="handleLookupKeyPress(event)" oninput="handleLookupInput(this)" maxlength="6">
               <button type="button" class="btn-search" onclick="lookupEmployee()">
                 <i class="fa-solid fa-magnifying-glass"></i> ค้นหาข้อมูล
               </button>
@@ -320,6 +323,110 @@
         </div>
       </div>
       
+    </div>
+
+    <!-- TAB 3: SPECIAL SELF-PAY CATALOG -->
+    <div class="tab-content" id="tab-special-catalog">
+      <div class="catalog-header-card">
+        <h2><i class="fa-solid fa-notes-medical text-primary"></i> รายการตรวจสุขภาพพิเศษประจำปี 2568 (ชำระเงินเอง)</h2>
+        <p>พนักงานสามารถเลือกรับบริการตรวจเพิ่มเติมนอกเหนือจากสิทธิ์พื้นฐาน โดยชำระเงินเอง ณ วันที่ตรวจสุขภาพ</p>
+        
+        <!-- Welfare details block -->
+        <div class="welfare-banner">
+          <div class="welfare-banner-icon"><i class="fa-solid fa-gift"></i></div>
+          <div class="welfare-banner-text">
+            <h4>🎁 สวัสดิการช่วยเหลือค่าใช้จ่าย 50% สำหรับพนักงานอายุ 50 ปีขึ้นไป</h4>
+            <p>บริษัทสมทบค่าใช้จ่าย 50% ของราคาตรวจ (สูงสุดไม่เกินเกณฑ์ที่กำหนด) สำหรับรายการลำดับที่ 27-33 โปรดตรวจสอบเกณฑ์ระดับตำแหน่งและระยะเวลาสวัสดิการด้านล่าง</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Welfare Table -->
+      <div class="welfare-table-container">
+        <h3><i class="fa-solid fa-list-check"></i> ตารางสวัสดิการสำหรับพนักงานอายุ 50 ปีขึ้นไป</h3>
+        <div class="table-responsive">
+          <table class="welfare-table">
+            <thead>
+              <tr>
+                <th>ประเภทการตรวจคัดกรอง</th>
+                <th>บริษัทช่วยเหลือ</th>
+                <th>วงเงินช่วยเหลือสูงสุด</th>
+                <th>ระดับของพนักงานที่ได้รับสิทธิ์</th>
+                <th>ความถี่สิทธิ์</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Mammogram</strong><br><span class="desc">ตรวจหาความผิดปกติของเต้านม (ผู้หญิง)</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">1,500 บาท</td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td><strong>Thin Prep</strong><br><span class="desc">ตรวจคัดกรองมะเร็งปากมดลูก (ผู้หญิง)</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">1,500 บาท</td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td><strong>Prostate Screening</strong><br><span class="desc">ตรวจมะเร็งต่อมลูกหมากโดยแพทย์ (ผู้ชาย)</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">1,000 บาท</td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td><strong>CT Calcium Score</strong><br><span class="desc">ตรวจแคลเซียมที่ผนังหลอดเลือดหัวใจ</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">2,000 บาท</td>
+                <td>ระดับ M4/T5 ขึ้นไป</td>
+                <td>ทุก 5 ปี</td>
+              </tr>
+              <tr>
+                <td><strong>Colonoscopy</strong><br><span class="desc">การส่องกล้องตรวจลำไส้ใหญ่ (รวมตรวจตัดชิ้นเนื้อ)</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">15,000 บาท</td>
+                <td>ระดับ M5/T6 ขึ้นไป</td>
+                <td>ทุก 5 ปี</td>
+              </tr>
+              <tr>
+                <td><strong>MRI Brain (MRI & MRA)</strong><br><span class="desc">ตรวจสมองด้วยคลื่นแม่เหล็กไฟฟ้า</span></td>
+                <td>50% ของราคา</td>
+                <td class="text-green">10,000 บาท</td>
+                <td>ระดับ M5/T6 ขึ้นไป</td>
+                <td>1 ครั้ง ตลอดอายุงาน</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="welfare-footnote">** ยื่นแบบฟอร์มขอเบิกค่ารักษาพยาบาล ใบเสร็จ ใบรับรองแพทย์ตัวจริง พร้อมผลตรวจเสนอหัวหน้างานอนุมัติ</p>
+      </div>
+
+      <!-- Filters & Search -->
+      <div class="catalog-filter-bar">
+        <div class="catalog-search-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="catalog-search-input" placeholder="พิมพ์ชื่อรายการตรวจเพื่อค้นหา... เช่น มะเร็ง, ตับ, ไขมัน" oninput="filterCatalog()">
+        </div>
+        <div class="catalog-filter-pills" id="catalog-filter-pills">
+          <button class="filter-pill active" onclick="setCatalogCategory('all')">ทั้งหมด</button>
+          <button class="filter-pill" onclick="setCatalogCategory('blood')">🧪 ตรวจเลือด/ปัสสาวะ</button>
+          <button class="filter-pill" onclick="setCatalogCategory('cancer')">🎗️ ตรวจมะเร็ง</button>
+          <button class="filter-pill" onclick="setCatalogCategory('scan')">🩻 สแกน/เฉพาะทาง</button>
+          <button class="filter-pill" onclick="setCatalogCategory('welfare')">🌟 มีสวัสดิการสมทบ</button>
+        </div>
+      </div>
+
+      <!-- Catalog Card Grid -->
+      <div class="catalog-grid" id="catalog-cards-grid">
+        <!-- Rendered by JS -->
+      </div>
+      
+      <div class="catalog-footer">
+        <p><i class="fa-solid fa-circle-info"></i> รายการตรวจพิเศษเหล่านี้จะรวมอยู่ในใบนัดตรวจสุขภาพจากทางโรงพยาบาล ท่านสามารถแจ้งยืนยันเลือกตรวจเพิ่มเติมและชำระเงินที่จุดลงทะเบียนตรวจจริงได้ทันที</p>
+      </div>
     </div>
 
     <!-- Loading Overlay -->
