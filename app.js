@@ -1207,7 +1207,7 @@ function renderSpecialCatalog() {
         }
         
         if (!meetsAge) {
-          reason = `พนักงานอายุ ${STATE.activeEmployee.age} ปี (ไม่ตรงเกณฑ์อายุ ${item.welfare.minAge}+)`;
+          reason = `ไม่ตรงตามเกณฑ์สิทธิ์สวัสดิการ (สำหรับอายุ ${item.welfare.minAge} ปีขึ้นไป)`;
         } else if (!meetsLevel) {
           reason = `พนักงานระดับตำแหน่งไม่ถึงเกณฑ์สิทธิ์ (${item.welfare.minLevel})`;
         } else {
@@ -1295,7 +1295,7 @@ function renderSpecialCatalog() {
           <div style="font-weight: 800; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> สิทธิ์พนักงานอายุ 35 ปีขึ้นไป:</div>
           <div style="margin-top: 4px; display: flex; justify-content: space-between; font-size: 0.82rem;">
             <span>สิทธิ์ฟรีสวัสดิการ:</span>
-            <span style="font-weight: bold; color: #047857;">${isFree ? "ได้รับสิทธิ์ตรวจฟรี 🎉" : "อายุไม่ถึง 35 ปี (ชำระเอง 160 ฿)"}</span>
+            <span style="font-weight: bold; color: #047857;">${isFree ? "ได้รับสิทธิ์ตรวจฟรี 🎉" : "ไม่อยู่ในเกณฑ์ตรวจฟรี (ชำระเอง 160 ฿)"}</span>
           </div>
         </div>
       `;
