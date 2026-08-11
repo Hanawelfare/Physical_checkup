@@ -16,8 +16,48 @@ const STATE = {
   configDates: [],
   configTimeSlots: [],
   registrationCounts: {},
-  selectedTimeSlot: "" // Holds the currently clicked slot text
+  selectedTimeSlot: "", // Holds the currently clicked slot text
+  catalogCategory: "all",
+  catalogSearchQuery: ""
 };
+
+// --- Special Self-Pay Test Catalog Data ---
+const SPECIAL_TESTS = [
+  { id: 1, name: "น้ำตาลในเลือด (FBS)", purpose: "ดูค่าน้ำตาลในเลือดประเมินดูภาวะเบาหวานเบื้องต้น", price: 30, fasting: true, category: "blood" },
+  { id: 2, name: "ตรวจหาระดับไขมันในเลือด (Cholesterol, Triglyceride, HDL, LDL)", purpose: "ดูระดับไขมันแต่ละชนิดในเลือด", price: 160, fasting: true, category: "blood", notes: "ฟรีสำหรับพนักงานที่อายุ 35 ปีขึ้นไป" },
+  { id: 3, name: "ตรวจสมรรถภาพการทำงานของตับ (SGOT, SGPT, ALK)", purpose: "ดูความผิดปกติของตับ ที่อาจทำให้เป็นโรคตับอักเสบ โรคมะเร็งตับ ผู้ที่มีประวัติดื่มสุราเป็นประจำควรตรวจเป็นประจำทุกปี", price: 150, fasting: false, category: "blood" },
+  { id: 4, name: "ตรวจการทำงานของไต (BUN, Creatinine)", purpose: "ตรวจสอบการทำงานของไต ว่าอยู่ปกติหรือไม่", price: 60, fasting: false, category: "blood" },
+  { id: 5, name: "ตรวจภาวะไทรอยด์ (TFT = FT3, FT4, TSH)", purpose: "ไทรอยด์ฮอร์โมน ช่วยควบคุมการเผาผลาญของร่างกาย ช่วยบ่งบอกว่าต่อมไทรอยด์ทำงานผิดปกติหรือไม่", price: 400, fasting: false, category: "blood" },
+  { id: 6, name: "ตรวจหาภาวะโรคเก๊าท์ (Uric Acid)", purpose: "ดูปริมาณของกรดยูริกในเลือดเพื่อวินิจฉัยโรคเก๊าท์", price: 50, fasting: false, category: "blood" },
+  { id: 7, name: "ตรวจหาน้ำตาลสะสม (คัดกรองโรคเบาหวาน) (HbA1C)", purpose: "วัดระดับน้ำตาลสะสมในเลือดตลอดระยะเวลา 4 เดือนที่ผ่านมา", price: 300, fasting: false, category: "blood" },
+  { id: 8, name: "ตรวจเกลือแร่ในเลือด (Electrolyte)", purpose: "ตรวจปริมาณ โซเดียม โปแตสเซียม ที่เหมาะสมในร่างกาย ซึ่งมีผลต่อการทำงานของกล้ามเนื้อหัวใจและกล้ามเนื้อส่วนอื่น", price: 300, fasting: false, category: "blood" },
+  { id: 9, name: "ตรวจหาระดับแคลเซียมในเลือด (Total Calcium)", purpose: "ดูปริมาณแคลเซียมในเลือด", price: 50, fasting: false, category: "blood" },
+  { id: 10, name: "ตรวจหาเชื้อไวรัสตับอักเสบชนิดบี (HBs Ag)", purpose: "ตรวจว่ามีเชื้อตับอักเสบ B อยู่ในร่างกายหรือไม่", price: 100, fasting: false, category: "blood" },
+  { id: 11, name: "ตรวจหาภูมิคุ้มกันเชื้อไวรัสตับอักเสบบี (Anti-HBs)", purpose: "ตรวจเพื่อดูว่าขณะนี้มีภูมิต้านทานเชื้อไวรัสตับอักเสบชนิด B หรือไม่", price: 150, fasting: false, category: "blood" },
+  { id: 12, name: "ตรวจหาไวรัสตับอักเสบซี (Anti-HCV)", purpose: "คือการตรวจหาเชื้อตับอักเสบ C อยู่ในร่างกายหรือไม่", price: 300, fasting: false, category: "blood" },
+  { id: 13, name: "ตรวจหากรุ๊ปเลือด (Blood Group)", purpose: "ตรวจระบุหมู่โลหิต (Blood Group)", price: 50, fasting: false, category: "blood" },
+  { id: 14, name: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG)", purpose: "คือการตรวจความสมบูรณ์ของการทำงานไฟฟ้าหัวใจ", price: 200, fasting: false, category: "blood", notes: "LPN1: ตรวจที่ห้องพยาบาล Plant 3 (16, 30 ต.ค. 68) | LPN2: ห้องพยาบาล (17, 31 ต.ค. 68)" },
+  { id: 15, name: "ตรวจคัดกรองมะเร็งต่อมลูกหมาก (PSA)", purpose: "การตรวจสารบ่งชี้มะเร็งต่อมลูกหมากในผู้ชาย", price: 300, fasting: false, category: "cancer", gender: "M" },
+  { id: 16, name: "ตรวจคัดกรองมะเร็งตับ (AFP)", purpose: "การตรวจสารบ่งชี้มะเร็งเพื่อช่วยวินิจฉัยมะเร็งตับ", price: 300, fasting: false, category: "cancer" },
+  { id: 17, name: "ตรวจคัดกรองมะเร็งทางเดินอาหาร/มะเร็งลำไส้ (CEA)", purpose: "การตรวจสารบ่งชี้มะเร็งเพื่อช่วยวินิจฉัยมะเร็งทางเดินอาหาร", price: 300, fasting: false, category: "cancer" },
+  { id: 18, name: "ตรวจคัดกรองมะเร็งรังไข่ (CA125)", purpose: "การตรวจสารบ่งชี้มะเร็งรังไข่ ส่วนใหญ่ในผู้หญิง", price: 500, fasting: false, category: "cancer", gender: "F" },
+  { id: 19, name: "ตรวจคัดกรองมะเร็งตับอ่อน (CA 19-9)", purpose: "การตรวจสารบ่งชี้มะเร็งตับอ่อนและมะเร็งของท่อน้ำดี", price: 500, fasting: false, category: "cancer" },
+  { id: 20, name: "ตรวจคัดกรองมะเร็งเต้านม (CA153)", purpose: "การตรวจสารบ่งชี้มะเร็งเต้านมส่วนใหญ่ในผู้หญิง", price: 500, fasting: false, category: "cancer", gender: "F" },
+  { id: 21, name: "ตรวจหาร่องรอยเชื้อไวรัสเอดส์ (Anti-HIV)", purpose: "ตรวจหาร่องรอยเชื้อไวรัสเอดส์ (Anti HIV)", price: 180, fasting: false, category: "cancer" },
+  { id: 22, name: "ตรวจคัดกรองโรคธาลัสซีเมีย (HB Typing)", purpose: "การตรวจคัดกรองโรคเลือดจางธาลัสซีเมีย", price: 600, fasting: false, category: "cancer" },
+  { id: 23, name: "ตรวจสมรรถภาพการมองเห็น", purpose: "เป็นการตรวจที่ช่วยประเมินการมองเห็นชัดเจนเพียงใด", price: 30, fasting: false, category: "blood" },
+  { id: 24, name: "ตรวจสมรรถภาพปอด", purpose: "เป็นการตรวจการทำงานของปอด", price: 30, fasting: false, category: "blood" },
+  { id: 25, name: "ตรวจสมรรถภาพการได้ยิน", purpose: "เป็นการตรวจการทำงานของหู", price: 30, fasting: false, category: "blood", location: "ตรวจที่รถ X-ray" },
+  { id: 26, name: "ตรวจหาปริมาณภูมิหลังฉีดวัคซีน Covid-19", purpose: "เป็นการตรวจหาปริมาณภูมิคุ้มกันโรคโควิด-19 ในร่างกาย", price: 800, fasting: false, category: "blood" },
+  
+  // Welfare program items (items 27-33)
+  { id: 27, name: "Mammogram", purpose: "การตรวจหาความผิดปกติของเต้านม (ผู้หญิง)", price: 1800, fasting: false, category: "cancer", gender: "F", welfare: { limit: 1500, minAge: 50 } },
+  { id: 28, name: "Thin Prep", purpose: "การตรวจคัดกรองมะเร็งปากมดลูก (ผู้หญิง)", price: 1200, fasting: false, category: "cancer", gender: "F", welfare: { limit: 1500, minAge: 50 } },
+  { id: 29, name: "Prostate Screening", purpose: "การตรวจมะเร็งต่อมลูกหมากโดยแพทย์ (ผู้ชาย)", price: 300, fasting: false, category: "cancer", gender: "M", welfare: { limit: 1000, minAge: 50 } },
+  { id: 30, name: "CT Calcium Score", purpose: "ตรวจแคลเซียมที่ผนังหลอดเลือดหัวใจ", price: 5500, fasting: false, category: "scan", welfare: { limit: 2000, minAge: 50, minLevel: "M4/T5" } },
+  { id: 31, name: "Colonoscopy / Colonoscopy + Biopsy", purpose: "การส่องกล้องตรวจลำไส้ใหญ่ (14,000 ฿) หรือส่องกล้องร่วมกับตัดชิ้นเนื้อ (15,000 ฿)", price: 14000, fasting: false, category: "scan", welfare: { limit: 15000, minAge: 50, minLevel: "M5/T6", isColon: true } },
+  { id: 33, name: "MRI Brain (MRI & MRA)", purpose: "การตรวจสมองด้วยคลื่นแม่เหล็กไฟฟ้า (MRI Brain 24,000 ฿ / MRI+MRA 29,000 ฿)", price: 24000, fasting: false, category: "scan", welfare: { limit: 10000, minAge: 50, minLevel: "M5/T6", isMri: true } }
+];
 
 // --- Test Programs Data ---
 const PROGRAM_TESTS = {
@@ -177,6 +217,10 @@ function switchTab(tabName) {
   
   document.querySelectorAll(".tab-content").forEach(panel => panel.classList.remove("active"));
   document.getElementById(`tab-${tabName}`).classList.add("active");
+  
+  if (tabName === "special-catalog") {
+    renderSpecialCatalog();
+  }
 }
 
 // --- Lookup Employee Details ---
@@ -347,6 +391,25 @@ function selectCancerOption(labelElement) {
 // --- Phone Input validation (1-4 digits) ---
 function validatePhone(input) {
   input.value = input.value.replace(/[^0-9]/g, "");
+}
+
+// --- Handle search keypress (Enter key) ---
+function handleLookupKeyPress(event) {
+  if (event.key === "Enter") {
+    event.preventDefault(); // Prevent form submission
+    lookupEmployee();
+  }
+}
+
+// --- Handle auto-search when 6 digits are typed ---
+function handleLookupInput(input) {
+  // Allow only numbers
+  input.value = input.value.replace(/[^0-9]/g, "");
+  
+  if (input.value.length === 6) {
+    input.blur(); // Dismiss keyboard
+    lookupEmployee();
+  }
 }
 
 // --- Shift or Location Change ---
@@ -1066,4 +1129,250 @@ function pulseRealtimeIndicator() {
     if (dot) dot.style.backgroundColor = "var(--success-color)";
   }, 1500);
 }
+
+// --- Special Self-Pay Catalog Page Logic ---
+function renderSpecialCatalog() {
+  const grid = document.getElementById("catalog-cards-grid");
+  if (!grid) return;
+  
+  grid.innerHTML = "";
+  
+  // Filter the items based on Category & Search text
+  const query = STATE.catalogSearchQuery.toLowerCase().trim();
+  const category = STATE.catalogCategory;
+  
+  // Determine if the currently loaded activeEmployee is eligible for age 50+ welfare
+  const employeeAge = STATE.activeEmployee ? STATE.activeEmployee.age : 0;
+  
+  const filtered = SPECIAL_TESTS.filter(item => {
+    // 1. Search Query filtering
+    if (query) {
+      const matchName = item.name.toLowerCase().includes(query);
+      const matchPurpose = item.purpose.toLowerCase().includes(query);
+      const matchCategory = item.category.toLowerCase().includes(query);
+      if (!matchName && !matchPurpose && !matchCategory) return false;
+    }
+    
+    // 2. Category filtering
+    if (category === "all") return true;
+    if (category === "welfare") return !!item.welfare;
+    return item.category === category;
+  });
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-slots-msg" style="grid-column: 1 / -1;">ไม่พบรายการตรวจสุขภาพพิเศษตามเงื่อนไขการค้นหา</div>`;
+    return;
+  }
+  
+  filtered.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "catalog-card";
+    
+    // Fasting label
+    let fastingBadge = "";
+    if (item.fasting) {
+      fastingBadge = `<span class="catalog-badge fasting"><i class="fa-solid fa-cookie-bite"></i> งดน้ำ-อาหาร 8-12 ชม.</span>`;
+    }
+    
+    // Location label if custom
+    let locBadge = "";
+    if (item.location) {
+      locBadge = `<span class="catalog-badge location"><i class="fa-solid fa-location-dot"></i> ${item.location}</span>`;
+    }
+    
+    // Welfare label and welfare price calculation box
+    let welfareBadge = "";
+    let welfareBox = "";
+    if (item.welfare) {
+      welfareBadge = `<span class="catalog-badge welfare"><i class="fa-solid fa-gift"></i> สวัสดิการช่วยเหลือ 50%</span>`;
+      
+      // Calculate dynamic price based on whether activeEmployee is logged in and meets the criteria
+      let isEligible = false;
+      let reason = "จำกัดเฉพาะพนักงานอายุ 50 ปีขึ้นไป";
+      
+      if (STATE.activeEmployee) {
+        const meetsAge = STATE.activeEmployee.age >= item.welfare.minAge;
+        let meetsLevel = true;
+        
+        if (item.welfare.minLevel) {
+          // If a level check is required (e.g. M4/T5 or M5/T6), check programName or programGroup
+          const userProg = STATE.activeEmployee.programName || "";
+          if (item.welfare.minLevel === "M5/T6") {
+            // M5/T6 corresponds to Program MGR
+            meetsLevel = (userProg.includes("MGR") || userProg.toLowerCase().includes("mgr"));
+          } else if (item.welfare.minLevel === "M4/T5") {
+            // M4/T5 corresponds to MGR or potentially senior levels.
+            meetsLevel = (userProg.includes("MGR") || userProg.toLowerCase().includes("mgr") || userProg.includes("35 ปีขึ้นไป") || STATE.activeEmployee.age >= 35);
+          }
+        }
+        
+        if (!meetsAge) {
+          reason = `พนักงานอายุ ${STATE.activeEmployee.age} ปี (ไม่ตรงเกณฑ์อายุ ${item.welfare.minAge}+)`;
+        } else if (!meetsLevel) {
+          reason = `พนักงานระดับตำแหน่งไม่ถึงเกณฑ์สิทธิ์ (${item.welfare.minLevel})`;
+        } else {
+          isEligible = true;
+        }
+      } else {
+        reason = "กรุณากรอกรหัสพนักงานในแท็บลงทะเบียนเพื่อตรวจสอบสิทธิ์สวัสดิการ";
+      }
+      
+      // Net calculations
+      // 50% co-pay, but co-pay amount cannot exceed the welfare limit
+      let basePrice = item.price;
+      let copayText = "";
+      
+      if (item.welfare.isMri) {
+        // Special case for MRI Brain (M5/T6, 50% max 10,000)
+        const companyPart = 10000; 
+        const empPartBrain = 24000 - companyPart;
+        const empPartBoth = 29000 - companyPart;
+        
+        if (isEligible) {
+          copayText = `
+            <div><span>MRI Brain (24,000 ฿):</span><span class="text-green">จ่ายเพียง ${formatPrice(empPartBrain)} ฿</span></div>
+            <div><span>MRI+MRA (29,000 ฿):</span><span class="text-green">จ่ายเพียง ${formatPrice(empPartBoth)} ฿</span></div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; border-top: 1px dashed #fcd34d; padding-top: 4px;">* บริษัทช่วยเหลือสูงสุด ${formatPrice(companyPart)} ฿</div>
+          `;
+        } else {
+          copayText = `
+            <div style="color: #b91c1c; font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> ไม่มีสิทธิ์ใช้สวัสดิการ:</div>
+            <div style="font-size: 0.78rem; color: #7f1d1d; margin-top: 2px;">${reason}</div>
+          `;
+        }
+      } else if (item.welfare.isColon) {
+        // Special case for Colonoscopy (M5/T6, 50% max 15,000)
+        const companyPart = Math.min(basePrice * 0.5, item.welfare.limit);
+        const empPart = basePrice - companyPart;
+        const companyPartBiopsy = Math.min(15000 * 0.5, item.welfare.limit);
+        const empPartBiopsy = 15000 - companyPartBiopsy;
+        
+        if (isEligible) {
+          copayText = `
+            <div><span>ส่องกล้องปกติ (14,000 ฿):</span><span class="text-green">จ่ายเพียง ${formatPrice(empPart)} ฿</span></div>
+            <div><span>รวมตัดชิ้นเนื้อ (15,000 ฿):</span><span class="text-green">จ่ายเพียง ${formatPrice(empPartBiopsy)} ฿</span></div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; border-top: 1px dashed #fcd34d; padding-top: 4px;">* บริษัทสมทบคนละครึ่ง 50% สูงสุด 15,000 ฿</div>
+          `;
+        } else {
+          copayText = `
+            <div style="color: #b91c1c; font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> ไม่มีสิทธิ์ใช้สวัสดิการ:</div>
+            <div style="font-size: 0.78rem; color: #7f1d1d; margin-top: 2px;">${reason}</div>
+          `;
+        }
+      } else {
+        // Normal co-pay calculations
+        const companyPart = Math.min(basePrice * 0.5, item.welfare.limit);
+        const empPart = basePrice - companyPart;
+        
+        if (isEligible) {
+          copayText = `
+            <div><span>ราคาตรวจปกติ:</span><span>${formatPrice(basePrice)} ฿</span></div>
+            <div><span>บริษัทสมทบช่วยเหลือ (50%):</span><span>-${formatPrice(companyPart)} ฿</span></div>
+            <div class="welfare-net-row"><span>ราคาพนักงานจ่ายจริง:</span><span>${formatPrice(empPart)} ฿</span></div>
+          `;
+        } else {
+          copayText = `
+            <div style="color: #b91c1c; font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> ไม่มีสิทธิ์ใช้สวัสดิการ:</div>
+            <div style="font-size: 0.78rem; color: #7f1d1d; margin-top: 2px;">${reason}</div>
+          `;
+        }
+      }
+      
+      welfareBox = `
+        <div class="catalog-welfare-box">
+          ${copayText}
+        </div>
+      `;
+    } else if (item.id === 2) {
+      // Special note for cholesterol (lipid) - free for 35+
+      let isFree = false;
+      if (STATE.activeEmployee) {
+        isFree = (STATE.activeEmployee.age >= 35);
+      }
+      
+      welfareBox = `
+        <div class="catalog-welfare-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
+          <div style="font-weight: 800; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> สิทธิ์พนักงานอายุ 35 ปีขึ้นไป:</div>
+          <div style="margin-top: 4px; display: flex; justify-content: space-between; font-size: 0.82rem;">
+            <span>สิทธิ์ฟรีสวัสดิการ:</span>
+            <span style="font-weight: bold; color: #047857;">${isFree ? "ได้รับสิทธิ์ตรวจฟรี 🎉" : "อายุไม่ถึง 35 ปี (ชำระเอง 160 ฿)"}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Render price value
+    let priceDisplay = `${formatPrice(item.price)} ฿`;
+    if (item.id === 33) {
+      priceDisplay = "เริ่มต้น 24,000 ฿";
+    }
+    
+    card.innerHTML = `
+      <div class="catalog-card-top">
+        <span class="catalog-card-id">รายการลำดับที่ ${item.id}</span>
+        <h4 class="catalog-card-name">${item.name}</h4>
+        <p class="catalog-card-purpose">${item.purpose}</p>
+        
+        <div class="catalog-badges">
+          ${fastingBadge}
+          ${locBadge}
+          ${welfareBadge}
+        </div>
+      </div>
+      
+      <div class="catalog-card-bottom">
+        <div class="catalog-price-row">
+          <span class="price-label">ราคาตรวจปกติ</span>
+          <span class="price-value">${priceDisplay}</span>
+        </div>
+        ${welfareBox}
+      </div>
+    `;
+    
+    grid.appendChild(card);
+  });
+}
+
+function formatPrice(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function filterCatalog() {
+  const searchInput = document.getElementById("catalog-search-input");
+  if (searchInput) {
+    STATE.catalogSearchQuery = searchInput.value;
+    renderSpecialCatalog();
+  }
+}
+
+function setCatalogCategory(catName) {
+  STATE.catalogCategory = catName;
+  
+  // Highlight active filter button
+  const container = document.getElementById("catalog-filter-pills");
+  if (container) {
+    container.querySelectorAll(".filter-pill").forEach(btn => {
+      btn.classList.remove("active");
+    });
+    
+    // Find matching button based on click category name
+    const buttons = container.querySelectorAll(".filter-pill");
+    const catMap = {
+      'all': 'ทั้งหมด',
+      'blood': 'ตรวจเลือด/ปัสสาวะ',
+      'cancer': 'ตรวจมะเร็ง',
+      'scan': 'สแกน/เฉพาะทาง',
+      'welfare': 'มีสวัสดิการสมทบ'
+    };
+    
+    buttons.forEach(btn => {
+      if (btn.textContent.includes(catMap[catName])) {
+        btn.classList.add("active");
+      }
+    });
+  }
+  
+  renderSpecialCatalog();
+}
+
 
