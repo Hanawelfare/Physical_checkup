@@ -92,12 +92,25 @@ function getEmployeeData(employeeId) {
     idToFind = idToFind.padStart(6, '0'); // Pad to 6 digits as per prompt
   }
   
-  // Use getDisplayValues() to get string representations as displayed on the sheet
-  var data = sheet.getDataRange().getDisplayValues();
-  if (data.length <= 1) return null;
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return null;
   
-  var headers = data[0].map(function(h) { return String(h).trim(); });
+  // Read headers only (1 row) to dynamically map column letter
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h).trim(); });
   var colId = headers.indexOf("รหัสพนักงาน");
+  if (colId === -1) throw new Error("Header 'รหัสพนักงาน' not found in Name sheet.");
+  
+  var colLetter = getColumnLetter(colId + 1);
+  
+  // Fast search using Google Sheets native TextFinder on the ID column range (milliseconds lookup)
+  var searchRange = sheet.getRange(colLetter + "2:" + colLetter + lastRow);
+  var cell = searchRange.createTextFinder(idToFind).matchEntireCell(true).findNext();
+  if (!cell) return null;
+  
+  // Read ONLY the matching employee's row
+  var rowIdx = cell.getRow();
+  var row = sheet.getRange(rowIdx, 1, 1, headers.length).getValues()[0];
+  
   var colName = headers.indexOf("ชื่อ");
   var colLastName = headers.indexOf("นามสกุล");
   var colDept = headers.indexOf("แผนก");
@@ -115,49 +128,36 @@ function getEmployeeData(employeeId) {
     }
   }
   
-  if (colId === -1) throw new Error("Header 'รหัสพนักงาน' not found in Name sheet.");
+  var ageVal = colAge !== -1 ? parseInt(row[colAge], 10) : 0;
+  var nameVal = colName !== -1 ? String(row[colName]).trim() : "";
+  var lastNameVal = colLastName !== -1 ? String(row[colLastName]).trim() : "";
+  var deptVal = colDept !== -1 ? String(row[colDept]).trim() : "";
+  var locVal = colLoc !== -1 ? String(row[colLoc]).trim() : "";
+  var progVal = colProg !== -1 ? String(row[colProg]).trim() : "";
+  var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
+  var pregVal = colPreg !== -1 ? String(row[colPreg]).trim().toLowerCase() : "";
+  var isPregnant = (pregVal === "yes" || pregVal === "y" || pregVal.indexOf("ตั้งครรภ์") !== -1 || pregVal === "จริง" || pregVal === "มี");
   
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var rawId = String(row[colId]).trim().replace(/^'/, '');
-    if (/^\d+$/.test(rawId)) {
-      rawId = rawId.padStart(6, '0');
-    }
-    
-    if (rawId === idToFind) {
-      var ageVal = colAge !== -1 ? parseInt(row[colAge], 10) : 0;
-      var nameVal = colName !== -1 ? String(row[colName]).trim() : "";
-      var lastNameVal = colLastName !== -1 ? String(row[colLastName]).trim() : "";
-      var deptVal = colDept !== -1 ? String(row[colDept]).trim() : "";
-      var locVal = colLoc !== -1 ? String(row[colLoc]).trim() : "";
-      var progVal = colProg !== -1 ? String(row[colProg]).trim() : "";
-      var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
-      var pregVal = colPreg !== -1 ? String(row[colPreg]).trim().toLowerCase() : "";
-      var isPregnant = (pregVal === "yes" || pregVal === "y" || pregVal.indexOf("ตั้งครรภ์") !== -1 || pregVal === "จริง" || pregVal === "มี");
-      
-      // Separate program group based on age and program name
-      var programGroup = "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี";
-      if (progVal.indexOf("MGR") !== -1 || progVal.toLowerCase().indexOf("mgr") !== -1) {
-        programGroup = "โปรแกรม MGR";
-      } else if (progVal.indexOf("35 ปีขึ้นไป") !== -1 || ageVal >= 35) {
-        programGroup = "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป";
-      }
-      
-      return {
-        employeeId: idToFind,
-        firstName: nameVal,
-        lastName: lastNameVal,
-        department: deptVal,
-        defaultLocation: locVal,
-        programName: progVal,
-        age: ageVal,
-        programGroup: programGroup,
-        riskProgram: riskVal,
-        isPregnant: isPregnant
-      };
-    }
+  // Separate program group based on age and program name
+  var programGroup = "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี";
+  if (progVal.indexOf("MGR") !== -1 || progVal.toLowerCase().indexOf("mgr") !== -1) {
+    programGroup = "โปรแกรม MGR";
+  } else if (progVal.indexOf("35 ปีขึ้นไป") !== -1 || ageVal >= 35) {
+    programGroup = "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป";
   }
-  return null;
+  
+  return {
+    employeeId: idToFind,
+    firstName: nameVal,
+    lastName: lastNameVal,
+    department: deptVal,
+    defaultLocation: locVal,
+    programName: progVal,
+    age: ageVal,
+    programGroup: programGroup,
+    riskProgram: riskVal,
+    isPregnant: isPregnant
+  };
 }
 
 /**
@@ -206,7 +206,7 @@ function getConfigAndSlots() {
   // Count current registrations
   var registrationCounts = {};
   if (regSheet) {
-    var rData = regSheet.getDataRange().getDisplayValues();
+    var rData = regSheet.getDataRange().getValues();
     if (rData.length > 1) {
       var rHeaders = rData[0].map(function(h) { return String(h).trim(); });
       var colLoc = rHeaders.indexOf("สถานที่");
@@ -285,7 +285,7 @@ function saveRegistration(regData) {
     }
     
     // Check if employee is already registered. Overwrite existing record if found.
-    var data = regSheet.getDataRange().getDisplayValues();
+    var data = regSheet.getDataRange().getValues();
     var existingRowIndex = -1;
     
     for (var i = 1; i < data.length; i++) {
@@ -371,11 +371,25 @@ function getRegistrationByEmpId(employeeId) {
     idToFind = idToFind.padStart(6, '0');
   }
   
-  var data = regSheet.getDataRange().getDisplayValues();
-  if (data.length <= 1) return null;
+  var lastRow = regSheet.getLastRow();
+  if (lastRow <= 1) return null;
   
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  var colId = headers.indexOf("รหัสพนักงาน");
+  // Read headers only (1 row) to dynamically map column letter
+  var headers = regSheet.getRange(1, 1, 1, regSheet.getLastColumn()).getValues()[0].map(function(h) { return String(h).trim(); });
+  var colIdIdx = headers.indexOf("รหัสพนักงาน");
+  if (colIdIdx === -1) return null;
+  
+  var colLetter = getColumnLetter(colIdIdx + 1);
+  
+  // Fast search using Google Sheets native TextFinder on the ID column range (milliseconds lookup)
+  var searchRange = regSheet.getRange(colLetter + "2:" + colLetter + lastRow);
+  var cell = searchRange.createTextFinder(idToFind).matchEntireCell(true).findNext();
+  if (!cell) return null;
+  
+  // Read ONLY the matching registration row
+  var rowIdx = cell.getRow();
+  var row = regSheet.getRange(rowIdx, 1, 1, headers.length).getValues()[0];
+  
   var colPhone = headers.indexOf("เบอร์โทรภายใน");
   var colShift = headers.indexOf("กะทำงาน");
   var colLoc = headers.indexOf("สถานที่");
@@ -386,36 +400,24 @@ function getRegistrationByEmpId(employeeId) {
   var colPreg = headers.indexOf("ตั้งครรภ์");
   var colTimeCreated = headers.indexOf("Timestamp");
   
-  if (colId === -1) return null;
+  var empDetail = getEmployeeData(idToFind) || {};
   
-  for (var i = 1; i < data.length; i++) {
-    var rawId = String(data[i][colId]).trim().replace(/^'/, '');
-    if (/^\d+$/.test(rawId)) {
-      rawId = rawId.padStart(6, '0');
-    }
-    
-    if (rawId === idToFind) {
-      var empDetail = getEmployeeData(idToFind) || {};
-      
-      return {
-        employeeId: idToFind,
-        firstName: empDetail.firstName || String(data[i][1]).trim(),
-        lastName: empDetail.lastName || String(data[i][2]).trim(),
-        department: empDetail.department || String(data[i][3]).trim(),
-        programGroup: empDetail.programGroup || "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป",
-        phone: colPhone !== -1 ? String(data[i][colPhone]).trim().replace(/^'/, '') : "",
-        shift: colShift !== -1 ? String(data[i][colShift]).trim() : "",
-        location: colLoc !== -1 ? String(data[i][colLoc]).trim() : "",
-        dateString: colDate !== -1 ? String(data[i][colDate]).trim() : "",
-        timeString: colTime !== -1 ? String(data[i][colTime]).trim() : "",
-        cancerTest: colCancer !== -1 ? String(data[i][colCancer]).trim() : "",
-        riskProgram: colRisk !== -1 ? String(data[i][colRisk]).trim() : "",
-        isPregnant: colPreg !== -1 ? String(data[i][colPreg]).trim() === "Yes" : false,
-        timestamp: colTimeCreated !== -1 ? String(data[i][colTimeCreated]).trim() : ""
-      };
-    }
-  }
-  return null;
+  return {
+    employeeId: idToFind,
+    firstName: empDetail.firstName || String(row[1]).trim(),
+    lastName: empDetail.lastName || String(row[2]).trim(),
+    department: empDetail.department || String(row[3]).trim(),
+    programGroup: empDetail.programGroup || "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป",
+    phone: colPhone !== -1 ? String(row[colPhone]).trim().replace(/^'/, '') : "",
+    shift: colShift !== -1 ? String(row[colShift]).trim() : "",
+    location: colLoc !== -1 ? String(row[colLoc]).trim() : "",
+    dateString: colDate !== -1 ? String(row[colDate]).trim() : "",
+    timeString: colTime !== -1 ? String(row[colTime]).trim() : "",
+    cancerTest: colCancer !== -1 ? String(row[colCancer]).trim() : "",
+    riskProgram: colRisk !== -1 ? String(row[colRisk]).trim() : "",
+    isPregnant: colPreg !== -1 ? String(row[colPreg]).trim() === "Yes" : false,
+    timestamp: colTimeCreated !== -1 ? (row[colTimeCreated] instanceof Date ? Utilities.formatDate(row[colTimeCreated], "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") : String(row[colTimeCreated]).trim()) : ""
+  };
 }
 
 /**
@@ -537,11 +539,11 @@ function initializeSheets() {
     timesSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#fce5cd");
     
     var defaultTimes = [
-      ["06:00 - 06:30", 70],
-      ["06:30 - 07:00", 70],
-      ["07:00 - 07:30", 70],
-      ["07:30 - 08:00", 70],
-      ["08:00 - 08:30", 70],
+      ["06:00 - 06:30", 350],
+      ["06:30 - 07:00", 350],
+      ["07:00 - 07:30", 350],
+      ["07:30 - 08:00", 350],
+      ["08:00 - 08:30", 350],
       ["08:30 - 09:00", 50],
       ["09:00 - 09:30", 50],
       ["09:30 - 10:00", 50],
@@ -571,5 +573,18 @@ function initializeSheets() {
   }
   
   return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', and 'Registration' sheets created/verified.";
+}
+
+/**
+ * Helper to convert 1-based column index to A-Z / AA-ZZ Google Sheet column letter
+ */
+function getColumnLetter(colIndex) {
+  var letter = "";
+  while (colIndex > 0) {
+    var temp = (colIndex - 1) % 26;
+    letter = String.fromCharCode(65 + temp) + letter;
+    colIndex = (colIndex - temp - 1) / 26;
+  }
+  return letter;
 }
 
