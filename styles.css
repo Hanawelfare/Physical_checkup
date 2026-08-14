@@ -723,15 +723,18 @@ select:disabled {
 }
 
 /* Selected slot button */
-.time-slot-btn.selected {
-  background: var(--primary-blue);
-  border-color: var(--primary-blue);
+.time-slot-btn.selected,
+.time-slot-btn.selected:hover:not(:disabled) {
+  background: var(--primary-blue) !important;
+  border-color: var(--primary-blue) !important;
   box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
 }
 
 .time-slot-btn.selected .time-text,
-.time-slot-btn.selected .slot-status {
-  color: #ffffff;
+.time-slot-btn.selected .slot-status,
+.time-slot-btn.selected:hover:not(:disabled) .time-text,
+.time-slot-btn.selected:hover:not(:disabled) .slot-status {
+  color: #ffffff !important;
 }
 
 /* Disabled - Sold Out Slot */
@@ -1809,4 +1812,38 @@ select:disabled {
     font-size: 0.8rem;
   }
 }
+
+/* Catalog Notice Alert Banner */
+.catalog-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning-color);
+  border-radius: 6px;
+  padding: 15px 20px;
+  margin-top: 15px;
+  margin-bottom: 20px;
+}
+
+.catalog-notice-banner-icon {
+  font-size: 1.6rem;
+  color: var(--warning-color);
+  margin-top: 2px;
+}
+
+.catalog-notice-banner-text h4 {
+  font-size: 1.05rem;
+  color: #c2410c;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.catalog-notice-banner-text p {
+  font-size: 0.9rem;
+  color: #7c2d12;
+  margin: 0;
+  line-height: 1.5;
+}
+
 
