@@ -57,6 +57,8 @@ function doPost(e) {
       result = deleteRegistration(args[0]);
     } else if (action === "initializeSheets") {
       result = initializeSheets();
+    } else if (action === "getAdminDashboardData") {
+      result = getAdminDashboardData();
     } else {
       throw new Error("Action not found: " + action);
     }
@@ -602,5 +604,84 @@ function getColumnLetter(colIndex) {
     colIndex = (colIndex - temp - 1) / 26;
   }
   return letter;
+}
+
+/**
+ * Fetch all eligible employees and all registrations for the Admin Dashboard
+ */
+function getAdminDashboardData() {
+  var ss = getSpreadsheet();
+  
+  var nameSheet = ss.getSheetByName("Name");
+  var regSheet = ss.getSheetByName("Registration");
+  
+  var employees = [];
+  if (nameSheet) {
+    var headers = nameSheet.getRange(1, 1, 1, nameSheet.getLastColumn()).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+    var colId = headers.indexOf("รหัสพนักงาน");
+    var colName = headers.indexOf("ชื่อ");
+    var colLastName = headers.indexOf("นามสกุล");
+    var colDept = headers.indexOf("แผนก");
+    
+    var colRight = -1;
+    for (var h = 0; h < headers.length; h++) {
+      if (headers[h].indexOf("สิทธิ์") !== -1) {
+        colRight = h;
+        break;
+      }
+    }
+    
+    var data = nameSheet.getDataRange().getDisplayValues();
+    for (var i = 1; i < data.length; i++) {
+      var rightVal = colRight !== -1 ? String(data[i][colRight]).trim() : "";
+      // Exclude those marked as no checkup eligibility
+      if (rightVal.indexOf("ไม่มีสิทธิ์") !== -1) {
+        continue;
+      }
+      
+      var idVal = colId !== -1 ? String(data[i][colId]).trim().replace(/^'/, '') : "";
+      if (idVal === "") continue;
+      if (/^\d+$/.test(idVal)) {
+        idVal = idVal.padStart(6, '0');
+      }
+      
+      employees.push({
+        employeeId: idVal,
+        firstName: colName !== -1 ? String(data[i][colName]).trim() : "",
+        lastName: colLastName !== -1 ? String(data[i][colLastName]).trim() : "",
+        department: colDept !== -1 ? String(data[i][colDept]).trim() : ""
+      });
+    }
+  }
+  
+  var registrations = [];
+  if (regSheet) {
+    var rHeaders = regSheet.getRange(1, 1, 1, regSheet.getLastColumn()).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+    var colIdIdx = rHeaders.indexOf("รหัสพนักงาน");
+    var colLoc = rHeaders.indexOf("สถานที่");
+    var colDate = rHeaders.indexOf("วันที่ตรวจ");
+    var colTime = rHeaders.indexOf("เวลาที่ตรวจ");
+    
+    var rData = regSheet.getDataRange().getDisplayValues();
+    for (var i = 1; i < rData.length; i++) {
+      var idVal = colIdIdx !== -1 ? String(rData[i][colIdIdx]).trim().replace(/^'/, '') : "";
+      if (idVal === "") continue;
+      if (/^\d+$/.test(idVal)) {
+        idVal = idVal.padStart(6, '0');
+      }
+      
+      registrations.push({
+        employeeId: idVal,
+        location: colLoc !== -1 ? String(rData[i][colLoc]).trim() : "",
+        dateString: colDate !== -1 ? String(rData[i][colDate]).trim() : "",
+        timeString: colTime !== -1 ? String(rData[i][colTime]).trim() : ""
+      });
+    }
+  }
+  
+  return {
+    employees: employees,
+    registrations: registrations
+  };
 }
 
