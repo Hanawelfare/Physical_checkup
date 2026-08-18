@@ -767,11 +767,25 @@ select:disabled {
   color: #f43f5e;
 }
 
-.fasting-note-header {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--warning-color);
-  margin-left: 5px;
+.time-slots-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: var(--primary-light);
+  border-left: 4px solid var(--primary-blue);
+  color: var(--text-main);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.time-slots-info-box i {
+  color: var(--primary-blue);
+  margin-top: 2px;
+  font-size: 1rem;
 }
 
 .empty-slots-msg {
