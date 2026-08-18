@@ -104,7 +104,7 @@ const MOCK_EMPLOYEES = [
   { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR", riskProgram: "" },
   { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, programGroup: "โปรแกรม MGR", riskProgram: "" },
   { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "" }
+  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", checkupRight: "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)" }
 ];
 
 const MOCK_CONFIG_DATES = [
@@ -117,11 +117,7 @@ const MOCK_CONFIG_DATES = [
 ];
 
 const MOCK_CONFIG_TIMESLOTS = [
-  { slotTime: "06:00 - 06:30", limit: 350 },
-  { slotTime: "06:30 - 07:00", limit: 350 },
-  { slotTime: "07:00 - 07:30", limit: 350 },
-  { slotTime: "07:30 - 08:00", limit: 350 },
-  { slotTime: "08:00 - 08:30", limit: 350 },
+  { slotTime: "08:00 - 08:30", limit: 50 },
   { slotTime: "08:30 - 09:00", limit: 50 },
   { slotTime: "09:00 - 09:30", limit: 50 },
   { slotTime: "09:30 - 10:00", limit: 50 },
@@ -240,25 +236,25 @@ async function lookupEmployee() {
   
   showLoader("กำลังค้นหาข้อมูลพนักงาน...");
   
-  if (CONFIG.currentMode === "mock") {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
-    handleEmployeeLookupResult(emp);
-  } else {
-    try {
+  try {
+    if (CONFIG.currentMode === "mock") {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
+      handleEmployeeLookupResult(emp);
+    } else {
       const res = await callApi("getEmployeeData", [empId]);
       if (res && res.success) {
         handleEmployeeLookupResult(res.data);
       } else {
         throw new Error(res.error || "เกิดข้อผิดพลาดในการดึงข้อมูล");
       }
-    } catch (err) {
-      console.error(err);
-      showToast(`ไม่พบรหัสพนักงาน: ${err.message}`, "error");
-      handleEmployeeLookupResult(null);
-    } finally {
-      hideLoader();
     }
+  } catch (err) {
+    console.error(err);
+    showToast(`ไม่พบรหัสพนักงาน: ${err.message}`, "error");
+    handleEmployeeLookupResult(null);
+  } finally {
+    hideLoader();
   }
 }
 
@@ -267,6 +263,13 @@ function handleEmployeeLookupResult(employee) {
   
   if (!employee) {
     showToast("ไม่พบข้อมูลพนักงานท่านนี้ กรุณาตรวจสอบรหัสพนักงานใหม่อีกครั้ง", "error");
+    profileBox.style.display = "none";
+    STATE.activeEmployee = null;
+    return;
+  }
+  
+  if (employee.checkupRight && employee.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
+    showToast(`ขออภัย รหัสพนักงานนี้ไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี (${employee.checkupRight})`, "error");
     profileBox.style.display = "none";
     STATE.activeEmployee = null;
     return;
@@ -487,9 +490,6 @@ function renderTimeSlots(preserveSelection = false) {
   
   gridContainer.innerHTML = "";
   
-  const fastingSlots = ["06:00 - 06:30", "06:30 - 07:00", "07:00 - 07:30", "07:30 - 08:00", "08:00 - 08:30"];
-  const userProgramGroup = STATE.activeEmployee.programGroup;
-  
   STATE.configTimeSlots.forEach(slot => {
     const slotTime = slot.slotTime;
     const limit = slot.limit;
@@ -498,23 +498,11 @@ function renderTimeSlots(preserveSelection = false) {
     const booked = STATE.registrationCounts[key] || 0;
     const remaining = Math.max(0, limit - booked);
     
-    // Check if slot falls in 06:00 - 08:30 and employee is under 35 (Program 2)
-    const isFastingTime = fastingSlots.includes(slotTime);
-    const isFastingRestricted = isFastingTime && (userProgramGroup === "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี");
-    
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "time-slot-btn";
     
-    if (isFastingRestricted) {
-      // Disable slot since this employee doesn't require fasting
-      btn.className += " disabled-fasting";
-      btn.disabled = true;
-      btn.innerHTML = `
-        <span class="time-text">${slotTime}</span>
-        <span class="slot-status">เฉพาะงดน้ำ/อาหาร</span>
-      `;
-    } else if (remaining <= 0) {
+    if (remaining <= 0) {
       // Disable slot since it's fully booked
       btn.disabled = true;
       btn.innerHTML = `
