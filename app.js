@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupModeSelector();
   loadConfigAndCounts();
   initRealTimeSync();
+  validateFormCompletion();
 });
 
 function setupModeSelector() {
@@ -240,25 +241,40 @@ async function lookupEmployee() {
     if (CONFIG.currentMode === "mock") {
       await new Promise(resolve => setTimeout(resolve, 500));
       const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
-      handleEmployeeLookupResult(emp);
+      if (emp) {
+        const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+        const reg = regs.find(r => r.employeeId === empId);
+        handleEmployeeLookupResult(emp, reg);
+      } else {
+        handleEmployeeLookupResult(null, null);
+      }
     } else {
       const res = await callApi("getEmployeeData", [empId]);
-      if (res && res.success) {
-        handleEmployeeLookupResult(res.data);
+      if (res && res.success && res.data) {
+        let reg = null;
+        try {
+          const regRes = await callApi("getRegistrationByEmpId", [empId]);
+          if (regRes && regRes.success) {
+            reg = regRes.data;
+          }
+        } catch (e) {
+          console.warn("Could not fetch registration:", e);
+        }
+        handleEmployeeLookupResult(res.data, reg);
       } else {
-        throw new Error(res.error || "เกิดข้อผิดพลาดในการดึงข้อมูล");
+        throw new Error((res && res.error) || "เกิดข้อผิดพลาดในการดึงข้อมูล");
       }
     }
   } catch (err) {
     console.error(err);
     showToast(`ไม่พบรหัสพนักงาน: ${err.message}`, "error");
-    handleEmployeeLookupResult(null);
+    handleEmployeeLookupResult(null, null);
   } finally {
     hideLoader();
   }
 }
 
-function handleEmployeeLookupResult(employee) {
+function handleEmployeeLookupResult(employee, registration = null) {
   const profileBox = document.getElementById("employee-profile-box");
   
   if (!employee) {
@@ -303,29 +319,66 @@ function handleEmployeeLookupResult(employee) {
     document.querySelectorAll(".cancer-option").forEach(opt => opt.classList.remove("selected"));
   }
   
-  // Try to set default location based on sheet data
-  const locSelect = document.getElementById("reg-location");
-  if (employee.defaultLocation && (employee.defaultLocation === "LPN1" || employee.defaultLocation === "LPN2")) {
-    locSelect.value = employee.defaultLocation;
+  const prevRegCard = document.getElementById("prev-reg-card");
+  if (registration) {
+    prevRegCard.style.display = "flex";
+    document.getElementById("prev-reg-loc-time").textContent = 
+      `สถานที่: ${registration.location} | วันที่: ${registration.dateString} | เวลา: ${registration.timeString}`;
+    
+    // Preset form values
+    document.getElementById("reg-phone").value = registration.phone || "";
+    document.getElementById("reg-shift").value = registration.shift || "";
+    document.getElementById("reg-location").value = registration.location || "";
+    
+    // Trigger populating the date list
+    onShiftOrLocationChange();
+    
+    document.getElementById("reg-date").value = registration.dateString || "";
+    
+    // Set selected slot state
+    STATE.selectedTimeSlot = registration.timeString || "";
+    document.getElementById("selected-time-slot").value = registration.timeString || "";
+    
+    // Render time slots and select the previous one
+    renderTimeSlots(true);
+    
+    // Handle Cancer selection for MGR
+    if (programGroup === "โปรแกรม MGR" && registration.cancerTest) {
+      const radio = document.querySelector(`input[name="cancerTest"][value="${registration.cancerTest}"]`);
+      if (radio) {
+        radio.checked = true;
+        const label = radio.closest(".cancer-option");
+        if (label) selectCancerOption(label);
+      }
+    }
   } else {
-    locSelect.selectedIndex = 0;
+    prevRegCard.style.display = "none";
+    
+    // Try to set default location based on sheet data
+    const locSelect = document.getElementById("reg-location");
+    if (employee.defaultLocation && (employee.defaultLocation === "LPN1" || employee.defaultLocation === "LPN2")) {
+      locSelect.value = employee.defaultLocation;
+    } else {
+      locSelect.selectedIndex = 0;
+    }
+    
+    // Reset input fields
+    document.getElementById("reg-shift").selectedIndex = 0;
+    document.getElementById("reg-phone").value = "";
+    
+    const dateSelect = document.getElementById("reg-date");
+    dateSelect.innerHTML = `<option value="" disabled selected>-- กรุณาเลือกสถานที่และกะก่อน --</option>`;
+    dateSelect.disabled = true;
+    
+    const gridContainer = document.getElementById("time-slots-grid-container");
+    gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกสถานที่ กะทำงาน และวันที่ตรวจสุขภาพด้านบนก่อน</div>`;
+    STATE.selectedTimeSlot = "";
+    document.getElementById("selected-time-slot").value = "";
   }
-  
-  // Reset input fields
-  document.getElementById("reg-shift").selectedIndex = 0;
-  document.getElementById("reg-phone").value = "";
-  
-  const dateSelect = document.getElementById("reg-date");
-  dateSelect.innerHTML = `<option value="" disabled selected>-- กรุณาเลือกสถานที่และกะก่อน --</option>`;
-  dateSelect.disabled = true;
-  
-  const gridContainer = document.getElementById("time-slots-grid-container");
-  gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกสถานที่ กะทำงาน และวันที่ตรวจสุขภาพด้านบนก่อน</div>`;
-  STATE.selectedTimeSlot = "";
-  document.getElementById("selected-time-slot").value = "";
   
   profileBox.style.display = "block";
   profileBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  validateFormCompletion();
 }
 
 // --- Render checkup list dynamically ---
@@ -389,11 +442,13 @@ function selectCancerOption(labelElement) {
   labelElement.classList.add("selected");
   const input = labelElement.querySelector('input[type="radio"]');
   if (input) input.checked = true;
+  validateFormCompletion();
 }
 
 // --- Phone Input validation (1-4 digits) ---
 function validatePhone(input) {
   input.value = input.value.replace(/[^0-9]/g, "");
+  validateFormCompletion();
 }
 
 // --- Handle search keypress (Enter key) ---
@@ -460,11 +515,13 @@ function onShiftOrLocationChange() {
   });
   
   dateSelect.disabled = false;
+  validateFormCompletion();
 }
 
 // --- Date Change: Render Time Slot Buttons Grid ---
 function onDateChange() {
   renderTimeSlots(false); // Reset selection when date is manually changed
+  validateFormCompletion();
 }
 
 function renderTimeSlots(preserveSelection = false) {
@@ -545,6 +602,7 @@ function selectTimeSlot(slotTime, buttonElement) {
   // Update state & hidden input validation
   STATE.selectedTimeSlot = slotTime;
   document.getElementById("selected-time-slot").value = slotTime;
+  validateFormCompletion();
 }
 
 // --- Submit Registration Flow ---
@@ -943,8 +1001,37 @@ function resetForm() {
   document.getElementById("health-registration-form").reset();
   document.getElementById("employee-profile-box").style.display = "none";
   document.getElementById("selected-time-slot").value = "";
+  const prevRegCard = document.getElementById("prev-reg-card");
+  if (prevRegCard) prevRegCard.style.display = "none";
   STATE.activeEmployee = null;
   STATE.selectedTimeSlot = "";
+  validateFormCompletion();
+}
+
+function validateFormCompletion() {
+  const submitBtn = document.getElementById("btn-submit-registration");
+  if (!submitBtn) return;
+  
+  if (!STATE.activeEmployee) {
+    submitBtn.disabled = true;
+    return;
+  }
+  
+  const phone = document.getElementById("reg-phone").value.trim();
+  const isPhoneValid = /^\d{1,4}$/.test(phone);
+  
+  const shift = document.getElementById("reg-shift").value;
+  const location = document.getElementById("reg-location").value;
+  const dateStr = document.getElementById("reg-date").value;
+  const timeStr = STATE.selectedTimeSlot;
+  
+  let isCancerValid = true;
+  if (STATE.activeEmployee.programGroup === "โปรแกรม MGR") {
+    isCancerValid = document.querySelector('input[name="cancerTest"]:checked') !== null;
+  }
+  
+  const isFormComplete = isPhoneValid && shift && location && dateStr && timeStr && isCancerValid;
+  submitBtn.disabled = !isFormComplete;
 }
 
 function showToast(text, type = "info") {
