@@ -128,6 +128,15 @@ function getEmployeeData(employeeId) {
     }
   }
   
+  // Find checkup right column dynamically by checking if header contains "สิทธิ์"
+  var colRight = -1;
+  for (var h = 0; h < headers.length; h++) {
+    if (headers[h].indexOf("สิทธิ์") !== -1) {
+      colRight = h;
+      break;
+    }
+  }
+  
   var ageVal = colAge !== -1 ? parseInt(row[colAge], 10) : 0;
   var nameVal = colName !== -1 ? String(row[colName]).trim() : "";
   var lastNameVal = colLastName !== -1 ? String(row[colLastName]).trim() : "";
@@ -136,7 +145,10 @@ function getEmployeeData(employeeId) {
   var progVal = colProg !== -1 ? String(row[colProg]).trim() : "";
   var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
   var pregVal = colPreg !== -1 ? String(row[colPreg]).trim().toLowerCase() : "";
+  var rightVal = colRight !== -1 ? String(row[colRight]).trim() : "";
+  
   var isPregnant = (pregVal === "yes" || pregVal === "y" || pregVal.indexOf("ตั้งครรภ์") !== -1 || pregVal === "จริง" || pregVal === "มี");
+  var checkupRightVal = rightVal !== "" ? rightVal : "มีสิทธิ์";
   
   // Separate program group based on age and program name
   var programGroup = "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี";
@@ -156,7 +168,8 @@ function getEmployeeData(employeeId) {
     age: ageVal,
     programGroup: programGroup,
     riskProgram: riskVal,
-    isPregnant: isPregnant
+    isPregnant: isPregnant,
+    checkupRight: checkupRightVal
   };
 }
 
@@ -206,7 +219,7 @@ function getConfigAndSlots() {
   // Count current registrations
   var registrationCounts = {};
   if (regSheet) {
-    var rData = regSheet.getDataRange().getValues();
+    var rData = regSheet.getDataRange().getDisplayValues();
     if (rData.length > 1) {
       var rHeaders = rData[0].map(function(h) { return String(h).trim(); });
       var colLoc = rHeaders.indexOf("สถานที่");
@@ -284,8 +297,14 @@ function saveRegistration(regData) {
       employeeId = employeeId.padStart(6, '0');
     }
     
+    // Check if employee is eligible to register (is not blocked by HR)
+    var empDetail = getEmployeeData(employeeId);
+    if (empDetail && empDetail.checkupRight && empDetail.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
+      throw new Error("ขออภัย รหัสพนักงานนี้ไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี (" + empDetail.checkupRight + ")");
+    }
+    
     // Check if employee is already registered. Overwrite existing record if found.
-    var data = regSheet.getDataRange().getValues();
+    var data = regSheet.getDataRange().getDisplayValues();
     var existingRowIndex = -1;
     
     for (var i = 1; i < data.length; i++) {
@@ -388,7 +407,7 @@ function getRegistrationByEmpId(employeeId) {
   
   // Read ONLY the matching registration row
   var rowIdx = cell.getRow();
-  var row = regSheet.getRange(rowIdx, 1, 1, headers.length).getValues()[0];
+  var row = regSheet.getRange(rowIdx, 1, 1, headers.length).getDisplayValues()[0];
   
   var colPhone = headers.indexOf("เบอร์โทรภายใน");
   var colShift = headers.indexOf("กะทำงาน");
@@ -414,7 +433,7 @@ function getRegistrationByEmpId(employeeId) {
     dateString: colDate !== -1 ? String(row[colDate]).trim() : "",
     timeString: colTime !== -1 ? String(row[colTime]).trim() : "",
     cancerTest: colCancer !== -1 ? String(row[colCancer]).trim() : "",
-    riskProgram: colRisk !== -1 ? String(row[colRisk]).trim() : "",
+    riskProgram: empDetail.riskProgram || (colRisk !== -1 ? String(row[colRisk]).trim() : ""),
     isPregnant: colPreg !== -1 ? String(row[colPreg]).trim() === "Yes" : false,
     timestamp: colTimeCreated !== -1 ? (row[colTimeCreated] instanceof Date ? Utilities.formatDate(row[colTimeCreated], "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") : String(row[colTimeCreated]).trim()) : ""
   };
@@ -470,41 +489,42 @@ function initializeSheets() {
   var nameSheet = ss.getSheetByName("Name");
   if (!nameSheet) {
     nameSheet = ss.insertSheet("Name");
-    nameSheet.appendRow(["รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "สถานที่", "โปรแกรมตรวจ", "อายุ"]);
-    nameSheet.getRange("A1:G1").setFontWeight("bold").setBackground("#c9daf8");
+    nameSheet.appendRow(["รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "สถานที่", "โปรแกรมตรวจ", "อายุ", "สิทธิ์การตรวจ"]);
+    nameSheet.getRange("A1:H1").setFontWeight("bold").setBackground("#c9daf8");
     
     // Add default values matching user's image exactly (with padded zeros)
     var demoEmployees = [
-      ["'003049", "วิชัย", "สุขประเสริฐกุล", "OPT", "LPN1", "โปรแกรม MGR", 59],
-      ["'004148", "ประภาพร", "ศรีประดู่", "HRDS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 57],
-      ["'004379", "ประคอง", "อ้อยงาม", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 54],
-      ["'004766", "พวงเพชร", "มณีฉาย", "CADT", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55],
-      ["'005933", "ระเบียบ", "ปาละรัตน์", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 60],
-      ["'006078", "อดิเรก", "อ่อนพรม", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 57],
-      ["'006125", "ยุทธนา", "สุยะนันทน์", "OP2S", "LPN2", "โปรแกรม MGR", 56],
-      ["'006585", "มะลิ", "ยอดสิงห์", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53],
-      ["'006665", "กุหลาบ", "ศรไชย", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 51],
-      ["'006704", "เยี่ยมรัก", "โดยอาษา", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 60],
-      ["'006764", "อัมพร", "มาลิสา", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54],
-      ["'007046", "ดาราวรรณ", "คำสกุล", "FIN", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55],
-      ["'007113", "พรณภัทร", "สุธรรมแจ่ม", "CADT", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53],
-      ["'007114", "สายสุนีย์", "เขียวงาม", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 52],
-      ["'007131", "มัทณานันต์", "พันธุ์สมบัติ", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 50],
-      ["'007236", "ไพพรรณณ์", "ป้อมรักษา", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 51],
-      ["'007321", "ทวี", "นพพรพิทักษ์", "TECH", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 58],
-      ["'007705", "มณฑา", "จันทร์เสน", "TRF", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53],
-      ["'007860", "วิไล", "แสวงศรี", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 49],
-      ["'008790", "วาสนา", "แซ่มวงศ์", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 59],
-      ["'009115", "ธวัชชัย", "ช่างทอง", "PMS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54],
-      ["'009597", "สังเวียน", "มีดี", "PM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 54],
-      ["'009847", "ศศิกานต์", "มะโนวงศ์", "OP1", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55],
-      ["'009892", "สมชาย", "ม่วงไหม", "OP2S", "LPN2", "โปรแกรม MGR", 56],
-      ["'010268", "ยอดธง", "กรวิรัตน์", "OP2S", "LPN2", "โปรแกรม MGR", 55],
-      ["'010285", "กฤษณะ", "เรือนเดื่อ", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54],
-      ["'010858", "กิตติ", "ปลิวมา", "IC", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 56],
-      ["'011016", "ซ่อนกลิ่น", "ศรีอ่อน", "OP1S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 51],
-      ["'011333", "กัญจน์ชญา", "ปัญญา", "QMSS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 58],
-      ["'011382", "เพียงอัมพร", "องค์วิศิษฐ์", "TRF", "LPN1", "โปรแกรม MGR", 57]
+      ["'003049", "วิชัย", "สุขประเสริฐกุล", "OPT", "LPN1", "โปรแกรม MGR", 59, ""],
+      ["'004148", "ประภาพร", "ศรีประดู่", "HRDS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 57, ""],
+      ["'004379", "ประคอง", "อ้อยงาม", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 54, ""],
+      ["'004766", "พวงเพชร", "มณีฉาย", "CADT", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55, ""],
+      ["'005933", "ระเบียบ", "ปาละรัตน์", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 60, ""],
+      ["'006078", "อดิเรก", "อ่อนพรม", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 57, ""],
+      ["'006125", "ยุทธนา", "สุยะนันทน์", "OP2S", "LPN2", "โปรแกรม MGR", 56, ""],
+      ["'006585", "มะลิ", "ยอดสิงห์", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53, ""],
+      ["'006665", "กุหลาบ", "ศรไชย", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 51, ""],
+      ["'006704", "เยี่ยมรัก", "โดยอาษา", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 60, ""],
+      ["'006764", "อัมพร", "มาลิสา", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54, ""],
+      ["'007046", "ดาราวรรณ", "คำสกุล", "FIN", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55, ""],
+      ["'007113", "พรณภัทร", "สุธรรมแจ่ม", "CADT", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53, ""],
+      ["'007114", "สายสุนีย์", "เขียวงาม", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 52, ""],
+      ["'007131", "มัทณานันต์", "พันธุ์สมบัติ", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 50, ""],
+      ["'007236", "ไพพรรณณ์", "ป้อมรักษา", "QM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 51, ""],
+      ["'007321", "ทวี", "นพพรพิทักษ์", "TECH", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 58, ""],
+      ["'007705", "มณฑา", "จันทร์เสน", "TRF", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 53, ""],
+      ["'007860", "วิไล", "แสวงศรี", "OP4", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 49, ""],
+      ["'008790", "วาสนา", "แซ่มวงศ์", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 59, ""],
+      ["'009115", "ธวัชชัย", "ช่างทอง", "PMS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54, ""],
+      ["'009597", "สังเวียน", "มีดี", "PM", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 54, ""],
+      ["'009847", "ศศิกานต์", "มะโนวงศ์", "OP1", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 55, ""],
+      ["'009892", "สมชาย", "ม่วงไหม", "OP2S", "LPN2", "โปรแกรม MGR", 56, ""],
+      ["'010268", "ยอดธง", "กรวิรัตน์", "OP2S", "LPN2", "โปรแกรม MGR", 55, ""],
+      ["'010285", "กฤษณะ", "เรือนเดื่อ", "OP2S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 54, ""],
+      ["'010858", "กิตติ", "ปลิวมา", "IC", "LPN1", "โปรแกรมอายุ 35 ปีขึ้นไป", 56, ""],
+      ["'011016", "ซ่อนกลิ่น", "ศรีอ่อน", "OP1S", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 51, ""],
+      ["'011333", "กัญจน์ชญา", "ปัญญา", "QMSS", "LPN2", "โปรแกรมอายุ 35 ปีขึ้นไป", 58, ""],
+      ["'011382", "เพียงอัมพร", "องค์วิศิษฐ์", "TRF", "LPN1", "โปรแกรม MGR", 57, ""],
+      ["'011999", "ณัฐพงษ์", "รักเรียน", "IT", "LPN1", "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", 28, "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)"]
     ];
     for (var j = 0; j < demoEmployees.length; j++) {
       nameSheet.appendRow(demoEmployees[j]);
@@ -539,11 +559,7 @@ function initializeSheets() {
     timesSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#fce5cd");
     
     var defaultTimes = [
-      ["06:00 - 06:30", 350],
-      ["06:30 - 07:00", 350],
-      ["07:00 - 07:30", 350],
-      ["07:30 - 08:00", 350],
-      ["08:00 - 08:30", 350],
+      ["08:00 - 08:30", 50],
       ["08:30 - 09:00", 50],
       ["09:00 - 09:30", 50],
       ["09:30 - 10:00", 50],
