@@ -18,7 +18,10 @@ const STATE = {
   registrationCounts: {},
   selectedTimeSlot: "", // Holds the currently clicked slot text
   catalogCategory: "all",
-  catalogSearchQuery: ""
+  catalogSearchQuery: "",
+  isAdminAuthenticated: false,
+  adminSubTab: "slots",
+  adminDashboardData: null
 };
 
 // --- Special Self-Pay Test Catalog Data ---
@@ -217,6 +220,8 @@ function switchTab(tabName) {
   
   if (tabName === "special-catalog") {
     renderSpecialCatalog();
+  } else if (tabName === "admin") {
+    checkAdminState();
   }
 }
 
@@ -1448,6 +1453,296 @@ function setCatalogCategory(catName) {
   }
   
   renderSpecialCatalog();
+}
+
+// --- Admin Dashboard Logic ---
+
+function checkAdminState() {
+  const loginCard = document.getElementById("admin-login-card");
+  const dashContent = document.getElementById("admin-dashboard-content");
+  
+  if (STATE.isAdminAuthenticated) {
+    loginCard.style.display = "none";
+    dashContent.style.display = "block";
+    loadAdminDashboardData();
+  } else {
+    loginCard.style.display = "block";
+    dashContent.style.display = "none";
+    document.getElementById("admin-pass-input").value = "";
+    document.getElementById("admin-pass-input").focus();
+  }
+}
+
+function handleAdminLogin(event) {
+  event.preventDefault();
+  const passwordInput = document.getElementById("admin-pass-input");
+  const password = passwordInput.value.trim();
+  
+  if (password === "ad2026") {
+    STATE.isAdminAuthenticated = true;
+    showToast("เข้าสู่ระบบแอดมินสำเร็จ", "success");
+    checkAdminState();
+  } else {
+    showToast("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", "error");
+    passwordInput.value = "";
+    passwordInput.focus();
+  }
+}
+
+function handleAdminLogout() {
+  STATE.isAdminAuthenticated = false;
+  STATE.adminDashboardData = null;
+  showToast("ออกจากระบบแอดมินเรียบร้อยแล้ว", "info");
+  checkAdminState();
+}
+
+async function loadAdminDashboardData() {
+  showLoader("กำลังดึงข้อมูลแดชบอร์ด...");
+  try {
+    if (CONFIG.currentMode === "mock") {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      const eligibleEmployees = MOCK_EMPLOYEES.filter(emp => {
+        return !(emp.checkupRight && emp.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1);
+      });
+      const registrations = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+      
+      STATE.adminDashboardData = {
+        employees: eligibleEmployees,
+        registrations: registrations
+      };
+    } else {
+      const res = await callApi("getAdminDashboardData", []);
+      if (res && res.success) {
+        STATE.adminDashboardData = res.data;
+      } else {
+        throw new Error(res.error || "ไม่สามารถดึงข้อมูลแดชบอร์ดได้");
+      }
+    }
+    renderAdminDashboard();
+  } catch (err) {
+    console.error(err);
+    showToast(`ดึงข้อมูลแดชบอร์ดล้มเหลว: ${err.message}`, "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+function renderAdminDashboard() {
+  if (!STATE.adminDashboardData) return;
+  
+  const { employees, registrations } = STATE.adminDashboardData;
+  
+  const total = employees.length;
+  const registeredList = registrations.filter(r => employees.some(e => e.employeeId === r.employeeId));
+  const registeredCount = registeredList.length;
+  const unregisteredCount = total - registeredCount;
+  const percentage = total > 0 ? ((registeredCount / total) * 100).toFixed(1) : "0.0";
+  
+  document.getElementById("stat-total-emp").textContent = total;
+  document.getElementById("stat-registered-emp").textContent = registeredCount;
+  document.getElementById("stat-unregistered-emp").textContent = unregisteredCount;
+  document.getElementById("stat-percent-emp").textContent = `${percentage}%`;
+  
+  // Populate dates select filter for slots table
+  const dateFilterSelect = document.getElementById("admin-slots-date-filter");
+  const uniqueDates = [...new Set(STATE.configDates.map(d => d.dateString))];
+  let dateFilterHtml = '<option value="all">ทั้งหมดทุกวัน</option>';
+  uniqueDates.forEach(dateStr => {
+    dateFilterHtml += `<option value="${dateStr}">${dateStr}</option>`;
+  });
+  dateFilterSelect.innerHTML = dateFilterHtml;
+  
+  // Populate departments select filter for unregistered list
+  const deptSelect = document.getElementById("admin-unreg-dept-select");
+  const uniqueDepts = [...new Set(employees.map(e => e.department).filter(Boolean))].sort();
+  let deptHtml = '<option value="all">ทั้งหมดทุกแผนก</option>';
+  uniqueDepts.forEach(dept => {
+    deptHtml += `<option value="${dept}">${dept}</option>`;
+  });
+  deptSelect.innerHTML = deptHtml;
+  
+  // Render sub-sections
+  renderAdminSlotsDashboard();
+  renderAdminUnregisteredList();
+}
+
+function renderAdminSlotsDashboard() {
+  if (!STATE.adminDashboardData) return;
+  
+  const { registrations } = STATE.adminDashboardData;
+  const locationFilter = document.getElementById("admin-slots-location-filter").value;
+  const dateFilter = document.getElementById("admin-slots-date-filter").value;
+  const tableBody = document.getElementById("admin-slots-table-body");
+  
+  tableBody.innerHTML = "";
+  
+  STATE.configDates.forEach(date => {
+    // Apply filters
+    if (locationFilter !== "all" && date.location !== locationFilter) return;
+    if (dateFilter !== "all" && date.dateString !== dateFilter) return;
+    
+    // For each date, loop through each config time slot
+    STATE.configTimeSlots.forEach(slot => {
+      const slotTime = slot.slotTime;
+      const limit = parseInt(slot.limit || 50, 10);
+      
+      // Count registrations matching location, date, time
+      const count = registrations.filter(r => 
+        r.location === date.location && 
+        r.dateString === date.dateString && 
+        r.timeString === slotTime
+      ).length;
+      
+      const isFull = count >= limit;
+      const statusBadgeHtml = isFull 
+        ? '<span class="badge-status full">เต็ม</span>' 
+        : `<span class="badge-status available">ว่าง (${limit - count})</span>`;
+      
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${date.location}</strong></td>
+        <td>${date.dateString}</td>
+        <td>${date.team}</td>
+        <td>${slotTime}</td>
+        <td><strong>${count}</strong></td>
+        <td>${limit}</td>
+        <td>${statusBadgeHtml}</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  });
+  
+  if (tableBody.innerHTML === "") {
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 15px;">ไม่มีข้อมูลรอบตรวจที่ตรงกับตัวกรอง</td></tr>`;
+  }
+}
+
+function renderAdminUnregisteredList() {
+  if (!STATE.adminDashboardData) return;
+  
+  const { employees, registrations } = STATE.adminDashboardData;
+  const deptFilter = document.getElementById("admin-unreg-dept-select").value;
+  const tableBody = document.getElementById("admin-unreg-table-body");
+  
+  tableBody.innerHTML = "";
+  
+  // Find unregistered
+  const unregisteredEmployees = employees.filter(emp => 
+    !registrations.some(r => r.employeeId === emp.employeeId)
+  );
+  
+  // Apply department filter
+  const filtered = unregisteredEmployees.filter(emp => 
+    deptFilter === "all" || emp.department === deptFilter
+  );
+  
+  filtered.forEach(emp => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${emp.employeeId}</strong></td>
+      <td>${emp.firstName} ${emp.lastName}</td>
+      <td><span class="profile-dept-badge">${emp.department}</span></td>
+      <td><span class="badge-status unregistered">ยังไม่ได้ลงทะเบียน</span></td>
+      <td style="text-align: center;">
+        <button type="button" class="btn-copy-individual" onclick="copyReminder('${emp.employeeId}')">
+          <i class="fa-solid fa-copy"></i> คัดลอกคำเตือน
+        </button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+  
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">ไม่มีรายชื่อพนักงานที่ค้างลงทะเบียนตามแผนกที่เลือก</td></tr>`;
+  }
+}
+
+function switchAdminSubTab(subTabName) {
+  STATE.adminSubTab = subTabName;
+  
+  document.querySelectorAll(".admin-sub-btn").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(`admin-sub-btn-${subTabName}`).classList.add("active");
+  
+  document.querySelectorAll(".admin-sec").forEach(sec => sec.classList.remove("active"));
+  document.getElementById(`admin-sec-${subTabName}`).classList.add("active");
+  
+  if (subTabName === "slots") {
+    renderAdminSlotsDashboard();
+  } else if (subTabName === "unregistered") {
+    renderAdminUnregisteredList();
+  }
+}
+
+function copyReminder(empId) {
+  if (!STATE.adminDashboardData) return;
+  const { employees } = STATE.adminDashboardData;
+  const emp = employees.find(e => e.employeeId === empId);
+  if (!emp) return;
+  
+  const portalUrl = `${window.location.origin}${window.location.pathname}`;
+  const text = `แจ้งเตือน: คุณ ${emp.firstName} ${emp.lastName} (รหัสพนักงาน ${emp.employeeId}) แผนก ${emp.department} ยังไม่ได้ลงทะเบียนตรวจสุขภาพประจำปี 2569 รบกวนดำเนินการลงทะเบียนโดยเร็วที่สุดผ่านลิงก์นี้ค่ะ: ${portalUrl}`;
+  
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      showToast(`คัดลอกข้อความเตือนคุณ ${emp.firstName} สำเร็จแล้ว`, "success");
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("ไม่สามารถคัดลอกข้อความได้", "error");
+    });
+}
+
+function copyReminderBulk() {
+  if (!STATE.adminDashboardData) return;
+  const { employees, registrations } = STATE.adminDashboardData;
+  const deptFilter = document.getElementById("admin-unreg-dept-select").value;
+  
+  const unregistered = employees.filter(emp => 
+    !registrations.some(r => r.employeeId === emp.employeeId)
+  );
+  
+  const filtered = unregistered.filter(emp => 
+    deptFilter === "all" || emp.department === deptFilter
+  );
+  
+  if (filtered.length === 0) {
+    showToast("ไม่มีพนักงานค้างลงทะเบียนเพื่อส่งคำเตือน", "warning");
+    return;
+  }
+  
+  const portalUrl = `${window.location.origin}${window.location.pathname}`;
+  let text = "";
+  
+  if (deptFilter !== "all") {
+    // Message for department representative
+    text = `เรียน ตัวแทนแผนก ${deptFilter},\n\nรบกวนช่วยประสานงานติดตามพนักงานที่ยังไม่ได้ลงทะเบียนตรวจสุขภาพประจำปี 2569 จำนวน ${filtered.length} ท่าน ดังรายชื่อด้านล่างนี้:\n`;
+    filtered.forEach((emp, idx) => {
+      text += `${idx + 1}. รหัส ${emp.employeeId} - คุณ ${emp.firstName} ${emp.lastName}\n`;
+    });
+    text += `\nรบกวนแจ้งให้พนักงานดำเนินการลงทะเบียนด้วยตนเองผ่านลิงก์นี้: ${portalUrl}\nขอบคุณค่ะ`;
+  } else {
+    // Message for all departments grouped
+    text = `แจ้งเตือนรายชื่อพนักงานที่ยังไม่ได้ลงทะเบียนตรวจสุขภาพประจำปี 2569:\n\n`;
+    const depts = [...new Set(filtered.map(e => e.department).filter(Boolean))].sort();
+    depts.forEach(dept => {
+      const deptEmps = filtered.filter(e => e.department === dept);
+      text += `[แผนก ${dept}] (ค้างลงทะเบียน ${deptEmps.length} ท่าน)\n`;
+      deptEmps.forEach(emp => {
+        text += `- รหัส ${emp.employeeId} : คุณ ${emp.firstName} ${emp.lastName}\n`;
+      });
+      text += `\n`;
+    });
+    text += `โปรดแจ้งพนักงานดำเนินการลงทะเบียนตรวจสุขภาพประจำปีผ่านลิงก์นี้: ${portalUrl}\nขอบคุณค่ะ`;
+  }
+  
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      showToast(`คัดลอกข้อความเตือนของแผนก ${deptFilter === "all" ? "ทั้งหมด" : deptFilter} สำเร็จแล้ว`, "success");
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("ไม่สามารถคัดลอกข้อความได้", "error");
+    });
 }
 
 
