@@ -61,6 +61,9 @@
       <button class="tab-btn" id="tab-btn-special-catalog" onclick="switchTab('special-catalog')">
         <i class="fa-solid fa-notes-medical"></i> รายการตรวจพิเศษ (ชำระเอง)
       </button>
+      <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin')">
+        <i class="fa-solid fa-user-gear"></i> แผงควบคุมแอดมิน
+      </button>
     </nav>
 
     <!-- TAB 1: REGISTRATION -->
@@ -452,6 +455,155 @@
       <!-- Catalog Card Grid -->
       <div class="catalog-grid" id="catalog-cards-grid">
         <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- TAB 4: ADMIN DASHBOARD -->
+    <div class="tab-content" id="tab-admin">
+      <!-- PASSWORD PROMPT GATE -->
+      <div class="admin-login-wrapper" id="admin-login-card">
+        <div class="admin-login-header">
+          <div class="admin-lock-icon"><i class="fa-solid fa-lock"></i></div>
+          <h3>แผงควบคุมผู้ดูแลระบบ (Admin Only)</h3>
+          <p>กรุณาระบุรหัสผ่านแอดมินเพื่อเข้าถึงข้อมูลสถิติและรายชื่อพนักงาน</p>
+        </div>
+        <form onsubmit="handleAdminLogin(event)" class="admin-login-form">
+          <div class="form-group">
+            <label for="admin-pass-input">รหัสผ่านผู้ดูแลระบบ (Admin Password):</label>
+            <input type="password" id="admin-pass-input" placeholder="ป้อนรหัสผ่านที่นี่..." required>
+          </div>
+          <button type="submit" class="btn-admin-login">
+            <i class="fa-solid fa-key"></i> ยืนยันรหัสผ่าน
+          </button>
+        </form>
+      </div>
+
+      <!-- MAIN DASHBOARD CONTENT (HIDDEN BY DEFAULT) -->
+      <div class="admin-dashboard-container" id="admin-dashboard-content" style="display: none;">
+        <div class="admin-dash-header">
+          <div>
+            <h2><i class="fa-solid fa-chart-line text-primary"></i> แผงควบคุมและรายงานผล (Admin Dashboard)</h2>
+            <p>ภาพรวมจำนวนคนลงทะเบียน สถิติการจองรอบเวลา และรายชื่อพนักงานที่ยังไม่ลงทะเบียน</p>
+          </div>
+          <button class="btn-admin-logout" onclick="handleAdminLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบแอดมิน
+          </button>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="stats-overview-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-info">
+              <span class="stat-lbl">พนักงานมีสิทธิ์ทั้งหมด</span>
+              <span class="stat-val" id="stat-total-emp">0</span>
+            </div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon"><i class="fa-solid fa-user-check"></i></div>
+            <div class="stat-info">
+              <span class="stat-lbl">ลงทะเบียนแล้ว</span>
+              <span class="stat-val" id="stat-registered-emp">0</span>
+            </div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon"><i class="fa-solid fa-user-clock"></i></div>
+            <div class="stat-info">
+              <span class="stat-lbl">ยังไม่ได้ลงทะเบียน</span>
+              <span class="stat-val" id="stat-unregistered-emp">0</span>
+            </div>
+          </div>
+          <div class="stat-card teal">
+            <div class="stat-icon"><i class="fa-solid fa-percent"></i></div>
+            <div class="stat-info">
+              <span class="stat-lbl">เปอร์เซ็นต์ลงทะเบียน</span>
+              <span class="stat-val" id="stat-percent-emp">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation inside Admin -->
+        <div class="admin-sub-tabs">
+          <button class="admin-sub-btn active" id="admin-sub-btn-slots" onclick="switchAdminSubTab('slots')">
+            <i class="fa-solid fa-calendar-days"></i> จำนวนคนแต่ละรอบเวลา
+          </button>
+          <button class="admin-sub-btn" id="admin-sub-btn-unregistered" onclick="switchAdminSubTab('unregistered')">
+            <i class="fa-solid fa-user-slash"></i> พนักงานที่ยังไม่ลงทะเบียน
+          </button>
+        </div>
+
+        <!-- Section 1: Time Slots Count Breakdown -->
+        <div class="admin-sec active" id="admin-sec-slots">
+          <div class="admin-slots-filter-row">
+            <div class="filter-group">
+              <label for="admin-slots-location-filter">สถานที่:</label>
+              <select id="admin-slots-location-filter" onchange="renderAdminSlotsDashboard()">
+                <option value="all">ทั้งหมด (LPN1 & LPN2)</option>
+                <option value="LPN1">LPN1</option>
+                <option value="LPN2">LPN2</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="admin-slots-date-filter">กรองวันที่ตรวจ:</label>
+              <select id="admin-slots-date-filter" onchange="renderAdminSlotsDashboard()">
+                <!-- Populated dynamically via JavaScript -->
+              </select>
+            </div>
+          </div>
+          <div class="dashboard-table-wrapper">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th>สถานที่</th>
+                  <th>วันที่ตรวจ</th>
+                  <th>กะ (ทีม)</th>
+                  <th>รอบเวลา</th>
+                  <th>จำนวนผู้จอง</th>
+                  <th>ความจุสูงสุด</th>
+                  <th>สถานะรอบ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-slots-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 2: Unregistered Reminder -->
+        <div class="admin-sec" id="admin-sec-unregistered">
+          <div class="admin-filter-bar">
+            <div class="filter-group">
+              <label for="admin-unreg-dept-select">กรองตามแผนก:</label>
+              <select id="admin-unreg-dept-select" onchange="renderAdminUnregisteredList()">
+                <option value="all">ทั้งหมดทุกแผนก</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="actions-group">
+              <button type="button" class="btn-copy-bulk" onclick="copyReminderBulk()">
+                <i class="fa-solid fa-copy"></i> ก๊อบปี้ข้อความเตือนของแผนกที่เลือก
+              </button>
+            </div>
+          </div>
+          <div class="dashboard-table-wrapper">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th>รหัสพนักงาน</th>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>แผนก</th>
+                  <th>สถานะการลงทะเบียน</th>
+                  <th style="text-align: center;">จัดการ / ก๊อบปี้ข้อความ</th>
+                </tr>
+              </thead>
+              <tbody id="admin-unreg-table-body">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
 
