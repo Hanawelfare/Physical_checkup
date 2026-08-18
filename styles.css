@@ -335,6 +335,47 @@ select:disabled {
   animation: slideDown 0.3s ease;
 }
 
+/* --- Previous Registration Notice Card --- */
+.previous-registration-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-color);
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-top: -10px;
+  margin-bottom: 25px;
+  animation: slideDown 0.3s ease;
+}
+
+.prev-reg-icon {
+  font-size: 1.8rem;
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prev-reg-details h4 {
+  font-size: 0.95rem;
+  color: var(--success-color);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.prev-reg-info-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.prev-reg-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .profile-info-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -826,6 +867,14 @@ select:disabled {
 
 .btn-submit:active {
   transform: translateY(0);
+}
+
+.btn-submit:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none !important;
 }
 
 /* --- Search Status Tab Styles --- */
