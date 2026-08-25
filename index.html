@@ -154,6 +154,53 @@
                 </label>
               </div>
           </div>
+          
+          <!-- Social Security (SSO) Checkup Items Section -->
+          <div class="sso-checkup-section visible" id="sso-tests-box">
+            <div class="sso-header">
+              <span><i class="fa-solid fa-hand-holding-medical"></i> รายการตรวจสุขภาพสิทธิ์ประกันสังคมเพิ่มเติม (วิเคราะห์ตามเกณฑ์อายุ):</span>
+            </div>
+            
+            <!-- SSO Rights Notice Box -->
+            <div class="sso-notice-box">
+              <i class="fa-solid fa-circle-info"></i>
+              <div class="sso-notice-text">
+                <strong>ข้อแนะนำการใช้สิทธิ์ตรวจสุขภาพประกันสังคม:</strong>
+                <span style="display: block; margin-bottom: 4px;">• รายการตรวจแต่ละอย่างมีความถี่ต่างกัน (เช่น ตรวจปีละ 1 ครั้ง, ทุก 2 ปี หรือทุก 5 ปีตามเกณฑ์อายุ)</span>
+                <span style="display: block; margin-bottom: 4px;">• หากท่านเคยใช้สิทธิ์ตรวจประกันสังคมบางรายการจากที่อื่นมาแล้วในรอบปีนี้ <strong>จะไม่สามารถตรวจรายการเดิมซ้ำได้</strong> แต่ยังสามารถใช้สิทธิ์ตรวจ <strong>รายการอื่นๆ ที่เหลือที่ท่านยังไม่เคยตรวจได้ค่ะ</strong></span>
+                <span style="display: block;">• <strong>การเลือกตัวเลือกด้านล่าง:</strong> เลือก <strong>"ยินยอมใช้สิทธิ์"</strong> หากต้องการใช้สิทธิ์ตรวจรายการที่เหลืออยู่ หรือเลือก <strong>"ไม่ยินยอมใช้สิทธิ์"</strong> หากตรวจครบแล้ว หรือต้องการใช้สิทธิ์บริษัทปกติเท่านั้น</span>
+              </div>
+            </div>
+            
+            <div class="sso-items-list" id="sso-items-list">
+              <!-- Populated dynamically by JavaScript -->
+            </div>
+            
+            <!-- SSO Consent Choice Selection -->
+            <div class="sso-consent-wrapper">
+              <div class="sso-consent-title">
+                <i class="fa-solid fa-circle-question"></i> ความประสงค์ยินยอมใช้สิทธิ์ประกันสังคมในการตรวจสุขภาพประจำปี *
+              </div>
+              <div class="sso-consent-grid">
+                <label class="sso-consent-option" id="sso-consent-yes-label">
+                  <input type="radio" name="ssoConsent" value="ยินยอมใช้สิทธิ์ประกันสังคม" required onchange="validateFormCompletion()">
+                  <div class="sso-consent-icon-box"><i class="fa-solid fa-circle-check"></i></div>
+                  <div class="sso-consent-text">
+                    <strong>ยินยอมใช้สิทธิ์ประกันสังคม</strong>
+                    <span>ต้องการตรวจรายการของประกันสังคมที่ได้รับสิทธิ์เพิ่มเติม</span>
+                  </div>
+                </label>
+                <label class="sso-consent-option" id="sso-consent-no-label">
+                  <input type="radio" name="ssoConsent" value="ไม่ยินยอมใช้สิทธิ์ประกันสังคม" onchange="validateFormCompletion()">
+                  <div class="sso-consent-icon-box"><i class="fa-solid fa-circle-xmark"></i></div>
+                  <div class="sso-consent-text">
+                    <strong>ไม่ยินยอมใช้สิทธิ์ประกันสังคม</strong>
+                    <span>ต้องการใช้เฉพาะสิทธิ์ของบริษัทหรือตรวจรอบบริการปกติ</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="section-title">
@@ -209,7 +256,7 @@
               </div>
               <div class="time-slots-info-box">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>หมายเหตุ:</strong> พนักงานที่ตรวจโปรแกรมที่ 1 (อายุ 35 ปีขึ้นไป) หรือพนักงานที่ต้องการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาเจาะเลือดตรวจได้เวลา 06:00 - 08:00 น. แล้วให้มาตรวจรายการอื่นๆตามเวลาที่ท่านลงทะเบียนไว้</span>
+                <span><strong>หมายเหตุ:</strong> พนักงานที่ตรวจโปรแกรมที่ 1 (อายุ 35 ปีขึ้นไป) หรือพนักงานที่ต้องการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจได้เวลา 06:00 - 08:00 น. และให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
               </div>
               
               <div class="time-slots-wrapper">
@@ -314,6 +361,19 @@
               </h4>
               <div class="ticket-tests-columns" id="card-tests-list-container">
                 <!-- Checkup items checklist rendered dynamically -->
+              </div>
+            </div>
+            
+            <!-- Row 3.5: Ticket SSO Section -->
+            <div class="ticket-sso-section" id="card-sso-section" style="display: none;">
+              <h4 class="section-subtitle">
+                <i class="fa-solid fa-hand-holding-medical"></i> รายการสิทธิ์ตรวจประกันสังคมเพิ่มเติมของท่าน
+              </h4>
+              <div class="ticket-sso-consent-status" id="card-sso-consent-status">
+                <!-- SSO Consent status populated dynamically -->
+              </div>
+              <div class="ticket-sso-grid" id="card-sso-list-container">
+                <!-- SSO items checklist populated dynamically -->
               </div>
             </div>
             
@@ -636,6 +696,6 @@
   </div>
 
   <!-- Client-side Logic Script -->
-  <script src="app.js"></script>
+  <script src="app.js?v=2570"></script>
 </body>
 </html>
