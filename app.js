@@ -917,19 +917,12 @@ function renderStatusCard(reg, searchId) {
         const age = parseInt(reg.age || 0, 10);
         const isFemale = reg.gender === "F" || reg.gender === "Female" || !!reg.isPregnant;
         const ssoItems = [
-          { id: 1, name: "การคัดกรองการได้ยิน Finger Rub Test", eligible: age >= 15 },
-          { id: 2, name: "การตรวจเต้านมโดยแพทย์หรือบุคลากรสาธารณสุข", eligible: age >= 30 && isFemale },
-          { id: 3, name: "การตรวจตาคัดกรองความผิดปกติโดยจักษุแพทย์", eligible: age >= 40 },
           { id: 4, name: "ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15 },
           { id: 5, name: "การตรวจปัสสาวะ UA", eligible: age >= 35 },
           { id: 6, name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35 },
           { id: 7, name: "การทำงานของไต Cr และ eGFR", eligible: age >= 35 },
           { id: 8, name: "ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20 },
           { id: 9, name: "เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35 },
-          { id: 10, name: "มะเร็งปากมดลูก Pap Smear (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale },
-          { id: 11, name: "มะเร็งปากมดลูก Via (เฉพาะเพศหญิง)", eligible: age >= 30 && age <= 55 && isFemale },
-          { id: 12, name: "มะเร็งปากมดลูก HPV DNA TEST (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale },
-          { id: 13, name: "การตรวจคัดกรองมะเร็งลำไส้ใหญ่ FIT TEST", eligible: age >= 50 },
           { id: 14, name: "การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15 }
         ];
         
@@ -1847,20 +1840,13 @@ function renderSsoCheckupList(employee) {
   const isFemale = employee.gender === "F" || employee.gender === "Female" || !!employee.isPregnant;
   
   const ssoItems = [
-    { id: 1, name: "1. การคัดกรองการได้ยิน Finger Rub Test", eligible: age >= 15, rule: "สิทธิ์อายุ 15 ปีขึ้นไป" },
-    { id: 2, name: "2. การตรวจเต้านมโดยแพทย์หรือบุคลากรสาธารณสุข", eligible: age >= 30 && isFemale, rule: isFemale ? (age >= 40 ? "ตรวจปีละ 1 ครั้ง (อายุ 40+)" : "ตรวจทุก 2 ปี (อายุ 30-39)") : "สิทธิ์เฉพาะสุภาพสตรี" },
-    { id: 3, name: "3. การตรวจตาคัดกรองความผิดปกติโดยจักษุแพทย์", eligible: age >= 40, rule: age >= 55 ? "ตรวจปีละ 1 ครั้ง (อายุ 55+)" : "ตรวจทุก 2 ปี (อายุ 40-54)" },
-    { id: 4, name: "4. ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจ 1 ครั้ง (อายุ 15-34)" },
-    { id: 5, name: "5. การตรวจปัสสาวะ UA", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 6, name: "6. ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 7, name: "7. การทำงานของไต Cr และ eGFR", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 8, name: "8. ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจทุก 5 ปี (อายุ 20-34)" },
-    { id: 9, name: "9. เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35, rule: "สิทธิ์ผู้ที่เกิดก่อน พ.ศ. 2535 (ตรวจ 1 ครั้ง)" },
-    { id: 10, name: "10. มะเร็งปากมดลูก Pap Smear (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale, rule: isFemale ? "หญิงอายุ 30 ปีขึ้นไป (ทุก 3 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
-    { id: 11, name: "11. มะเร็งปากมดลูก Via (เฉพาะเพศหญิง)", eligible: age >= 30 && age <= 55 && isFemale, rule: isFemale ? "หญิงอายุ 30-55 ปี (ทุก 5 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
-    { id: 12, name: "12. มะเร็งปากมดลูก HPV DNA TEST (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale, rule: isFemale ? "หญิงอายุ 30 ปีขึ้นไป (ทุก 5 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
-    { id: 13, name: "13. การตรวจคัดกรองมะเร็งลำไส้ใหญ่ FIT TEST", eligible: age >= 50, rule: "สิทธิ์อายุ 50 ปีขึ้นไป" },
-    { id: 14, name: "14. การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15, rule: "ตรวจทุก 3 ปี (อายุ 15+)" }
+    { id: 4, name: "1. ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจ 1 ครั้ง (อายุ 15-34)" },
+    { id: 5, name: "2. การตรวจปัสสาวะ UA", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 6, name: "3. ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 7, name: "4. การทำงานของไต Cr และ eGFR", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 8, name: "5. ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจทุก 5 ปี (อายุ 20-34)" },
+    { id: 9, name: "6. เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35, rule: "สิทธิ์ผู้ที่เกิดก่อน พ.ศ. 2535 (ตรวจ 1 ครั้ง)" },
+    { id: 14, name: "7. การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15, rule: "ตรวจทุก 3 ปี (อายุ 15+)" }
   ];
   
   ssoItems.forEach(item => {
