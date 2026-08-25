@@ -2312,8 +2312,8 @@ select:disabled {
 
 /* --- Social Security (SSO) Checkup Program Styles --- */
 .sso-checkup-section {
-  background: #fffbeb; /* soft warm orange-yellow bg */
-  border: 1.5px solid #fde047; /* soft yellow-gold border */
+  background: #faf5ff; /* soft purple/lavender bg */
+  border: 1.5px solid #d8b4fe; /* soft purple border */
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 25px;
@@ -2324,7 +2324,7 @@ select:disabled {
 .sso-header {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #d97706; /* warm amber color */
+  color: #6b21a8; /* deep purple header */
   margin-bottom: 15px;
   display: flex;
   align-items: center;
@@ -2335,19 +2335,19 @@ select:disabled {
   display: flex;
   gap: 10px;
   padding: 12px 15px;
-  background: #fff7ed; /* very soft orange bg */
-  border: 1px solid #ffedd5;
+  background: #f3e8ff; /* light purple notice bg */
+  border: 1px solid #e9d5ff; /* light purple border */
   border-radius: 8px;
   margin-bottom: 15px;
   font-size: 0.82rem;
-  color: #c2410c; /* dark warm orange text */
+  color: #581c87; /* dark purple text */
   line-height: 1.45;
 }
 
 .sso-notice-box i {
   font-size: 1.05rem;
   margin-top: 2px;
-  color: #ea580c;
+  color: #7c3aed; /* violet icon color */
 }
 
 .sso-notice-text strong {
@@ -2381,12 +2381,12 @@ select:disabled {
 }
 
 .sso-item.eligible {
-  border-color: #fef08a; /* soft yellow-gold border */
+  border-color: #d8b4fe; /* soft purple border for eligible items */
   background: white;
 }
 
 .sso-item.eligible i {
-  color: #d97706; /* warm orange checkmark icon */
+  color: #0d9488; /* checkmark remains teal/green to indicate pass/success */
 }
 
 .sso-item.ineligible {
@@ -2479,14 +2479,14 @@ select:disabled {
 
 /* SSO Consent Selected States */
 .sso-consent-option:has(input[type="radio"]:checked) {
-  border-color: var(--primary-blue);
-  background: #f0f9ff;
-  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);
+  border-color: #7c3aed; /* purple border */
+  background: #faf5ff; /* light purple bg */
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.05);
 }
 
 .sso-consent-option:has(input[type="radio"]:checked) .sso-consent-icon-box {
-  border-color: var(--primary-blue);
-  background: var(--primary-blue);
+  border-color: #7c3aed;
+  background: #7c3aed;
   color: white;
 }
 
