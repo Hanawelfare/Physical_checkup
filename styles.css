@@ -2310,4 +2310,256 @@ select:disabled {
   }
 }
 
+/* --- Social Security (SSO) Checkup Program Styles --- */
+.sso-checkup-section {
+  background: #fffbeb; /* soft warm orange-yellow bg */
+  border: 1.5px solid #fde047; /* soft yellow-gold border */
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  margin-top: 15px;
+  animation: slideDown 0.35s ease;
+}
+
+.sso-header {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #d97706; /* warm amber color */
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sso-notice-box {
+  display: flex;
+  gap: 10px;
+  padding: 12px 15px;
+  background: #fff7ed; /* very soft orange bg */
+  border: 1px solid #ffedd5;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.82rem;
+  color: #c2410c; /* dark warm orange text */
+  line-height: 1.45;
+}
+
+.sso-notice-box i {
+  font-size: 1.05rem;
+  margin-top: 2px;
+  color: #ea580c;
+}
+
+.sso-notice-text strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.sso-items-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sso-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  transition: all 0.2s;
+}
+
+.sso-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sso-item.eligible {
+  border-color: #fef08a; /* soft yellow-gold border */
+  background: white;
+}
+
+.sso-item.eligible i {
+  color: #d97706; /* warm orange checkmark icon */
+}
+
+.sso-item.ineligible {
+  background: #f8fafc;
+  border-color: #f1f5f9;
+  color: #94a3b8;
+}
+
+.sso-item.ineligible i {
+  color: #cbd5e1;
+}
+
+.sso-badge-ineligible {
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* --- SSO Consent Cards UI --- */
+.sso-consent-wrapper {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 20px;
+  margin-top: 15px;
+}
+
+.sso-consent-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sso-consent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.sso-consent-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sso-consent-option input[type="radio"] {
+  display: none; /* Hide default radio */
+}
+
+.sso-consent-icon-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: transparent;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sso-consent-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sso-consent-text strong {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.sso-consent-text span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* SSO Consent Selected States */
+.sso-consent-option:has(input[type="radio"]:checked) {
+  border-color: var(--primary-blue);
+  background: #f0f9ff;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);
+}
+
+.sso-consent-option:has(input[type="radio"]:checked) .sso-consent-icon-box {
+  border-color: var(--primary-blue);
+  background: var(--primary-blue);
+  color: white;
+}
+
+/* SSO Consent Hover States */
+.sso-consent-option:hover:not(:has(input[type="radio"]:checked)) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  .sso-items-list {
+    grid-template-columns: 1fr;
+  }
+  .sso-consent-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* --- Ticket SSO Section Styles --- */
+.ticket-sso-section {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 15px;
+  margin-top: 15px;
+}
+
+.ticket-sso-consent-status {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ticket-sso-consent-status.consent-yes {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.ticket-sso-consent-status.consent-no {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.ticket-sso-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.ticket-sso-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.ticket-sso-item i {
+  color: #d97706; /* orange checkmark */
+}
+
+@media (max-width: 576px) {
+  .ticket-sso-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
