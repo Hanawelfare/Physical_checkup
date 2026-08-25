@@ -96,18 +96,18 @@ const PROGRAM_TESTS = {
 
 // --- Mock Data for Offline Mode ---
 const MOCK_EMPLOYEES = [
-  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี", isPregnant: true },
-  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว" },
-  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR", riskProgram: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG), ตรวจสมรรถภาพปอด" },
-  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", checkupRight: "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)" }
+  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี", isPregnant: true },
+  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว" },
+  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "M", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG), ตรวจสมรรถภาพปอด" },
+  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
+  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, gender: "M", programGroup: "MGR", riskProgram: "" },
+  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, gender: "F", programGroup: "โปรแกรม MGR", riskProgram: "" },
+  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, gender: "M", programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", checkupRight: "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)" }
 ];
 
 const MOCK_CONFIG_DATES = [
@@ -356,6 +356,16 @@ function handleEmployeeLookupResult(employee, registration = null) {
         if (label) selectCancerOption(label);
       }
     }
+    
+    // Preset SSO consent selection
+    if (registration.ssoConsent) {
+      const ssoRadio = document.querySelector(`input[name="ssoConsent"][value="${registration.ssoConsent}"]`);
+      if (ssoRadio) {
+        ssoRadio.checked = true;
+      }
+    } else {
+      document.querySelectorAll('input[name="ssoConsent"]').forEach(r => r.checked = false);
+    }
   } else {
     prevRegCard.style.display = "none";
     
@@ -379,7 +389,13 @@ function handleEmployeeLookupResult(employee, registration = null) {
     gridContainer.innerHTML = `<div class="empty-slots-msg">กรุณาเลือกสถานที่ กะทำงาน และวันที่ตรวจสุขภาพด้านบนก่อน</div>`;
     STATE.selectedTimeSlot = "";
     document.getElementById("selected-time-slot").value = "";
+    
+    // Clear SSO consent selection
+    document.querySelectorAll('input[name="ssoConsent"]').forEach(r => r.checked = false);
   }
+  
+  // Render dynamic SSO checkup list
+  renderSsoCheckupList(employee);
   
   profileBox.style.display = "block";
   profileBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -645,6 +661,13 @@ async function handleRegistrationSubmit(event) {
     cancerTest = checkedRadio.value;
   }
   
+  const ssoConsentRadio = document.querySelector('input[name="ssoConsent"]:checked');
+  if (!ssoConsentRadio) {
+    showToast("กรุณาเลือกความประสงค์ยินยอม/ไม่ยินยอมใช้สิทธิ์ประกันสังคม", "warning");
+    return;
+  }
+  const ssoConsent = ssoConsentRadio.value;
+  
   const isPregnant = !!STATE.activeEmployee.isPregnant;
   const payload = {
     employeeId: STATE.activeEmployee.employeeId,
@@ -658,7 +681,8 @@ async function handleRegistrationSubmit(event) {
     timeString: timeStr,
     cancerTest: cancerTest,
     riskProgram: STATE.activeEmployee.riskProgram || "",
-    isPregnant: isPregnant
+    isPregnant: isPregnant,
+    ssoConsent: ssoConsent
   };
   
   showLoader("กำลังบันทึกข้อมูลลงทะเบียนตรวจสุขภาพ...");
@@ -762,6 +786,14 @@ async function checkRegistrationStatus() {
     await new Promise(resolve => setTimeout(resolve, 500));
     const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
     const foundReg = regs.find(r => r.employeeId === empId);
+    if (foundReg) {
+      const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
+      if (emp) {
+        foundReg.programGroup = emp.programGroup;
+        foundReg.age = emp.age;
+        foundReg.gender = emp.gender || "";
+      }
+    }
     
     hideLoader();
     renderStatusCard(foundReg, empId);
@@ -868,6 +900,65 @@ function renderStatusCard(reg, searchId) {
       <span>${currentIdx}. ${reg.cancerTest}</span>
     `;
     checklistContainer.appendChild(item);
+  }
+  
+  // Render SSO checkup items list on Ticket
+  const cardSsoSection = document.getElementById("card-sso-section");
+  const cardSsoConsentStatus = document.getElementById("card-sso-consent-status");
+  const cardSsoListContainer = document.getElementById("card-sso-list-container");
+  
+  if (cardSsoSection && cardSsoConsentStatus && cardSsoListContainer) {
+    if (reg.ssoConsent) {
+      cardSsoSection.style.display = "block";
+      if (reg.ssoConsent === "ยินยอมใช้สิทธิ์ประกันสังคม") {
+        cardSsoConsentStatus.className = "ticket-sso-consent-status consent-yes";
+        cardSsoConsentStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> ยินยอมใช้สิทธิ์ประกันสังคมในการตรวจสุขภาพประจำปี`;
+        
+        const age = parseInt(reg.age || 0, 10);
+        const isFemale = reg.gender === "F" || reg.gender === "Female" || !!reg.isPregnant;
+        const ssoItems = [
+          { id: 1, name: "การคัดกรองการได้ยิน Finger Rub Test", eligible: age >= 15 },
+          { id: 2, name: "การตรวจเต้านมโดยแพทย์หรือบุคลากรสาธารณสุข", eligible: age >= 30 && isFemale },
+          { id: 3, name: "การตรวจตาคัดกรองความผิดปกติโดยจักษุแพทย์", eligible: age >= 40 },
+          { id: 4, name: "ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15 },
+          { id: 5, name: "การตรวจปัสสาวะ UA", eligible: age >= 35 },
+          { id: 6, name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35 },
+          { id: 7, name: "การทำงานของไต Cr และ eGFR", eligible: age >= 35 },
+          { id: 8, name: "ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20 },
+          { id: 9, name: "เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35 },
+          { id: 10, name: "มะเร็งปากมดลูก Pap Smear (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale },
+          { id: 11, name: "มะเร็งปากมดลูก Via (เฉพาะเพศหญิง)", eligible: age >= 30 && age <= 55 && isFemale },
+          { id: 12, name: "มะเร็งปากมดลูก HPV DNA TEST (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale },
+          { id: 13, name: "การตรวจคัดกรองมะเร็งลำไส้ใหญ่ FIT TEST", eligible: age >= 50 },
+          { id: 14, name: "การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15 }
+        ];
+        
+        cardSsoListContainer.innerHTML = "";
+        let countSsoIdx = 1;
+        ssoItems.forEach(item => {
+          if (item.eligible) {
+            const div = document.createElement("div");
+            div.className = "ticket-sso-item";
+            div.innerHTML = `
+              <i class="fa-solid fa-circle-check"></i>
+              <span>${countSsoIdx}. ${item.name}</span>
+            `;
+            cardSsoListContainer.appendChild(div);
+            countSsoIdx++;
+          }
+        });
+        
+        if (cardSsoListContainer.innerHTML === "") {
+          cardSsoListContainer.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted); padding: 5px;">ไม่มีรายการตรวจที่เข้าเกณฑ์อายุของท่าน</div>`;
+        }
+      } else {
+        cardSsoConsentStatus.className = "ticket-sso-consent-status consent-no";
+        cardSsoConsentStatus.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ไม่ยินยอมใช้สิทธิ์ประกันสังคม (ตรวจเฉพาะสิทธิ์ปกติของบริษัท)`;
+        cardSsoListContainer.innerHTML = "";
+      }
+    } else {
+      cardSsoSection.style.display = "none";
+    }
   }
   
   cardContainer.classList.add("visible");
@@ -1035,7 +1126,9 @@ function validateFormCompletion() {
     isCancerValid = document.querySelector('input[name="cancerTest"]:checked') !== null;
   }
   
-  const isFormComplete = isPhoneValid && shift && location && dateStr && timeStr && isCancerValid;
+  const isSsoConsentValid = document.querySelector('input[name="ssoConsent"]:checked') !== null;
+  
+  const isFormComplete = isPhoneValid && shift && location && dateStr && timeStr && isCancerValid && isSsoConsentValid;
   submitBtn.disabled = !isFormComplete;
 }
 
@@ -1743,6 +1836,50 @@ function copyReminderBulk() {
       console.error(err);
       showToast("ไม่สามารถคัดลอกข้อความได้", "error");
     });
+}
+
+function renderSsoCheckupList(employee) {
+  const container = document.getElementById("sso-items-list");
+  if (!container) return;
+  
+  container.innerHTML = "";
+  const age = parseInt(employee.age || 0, 10);
+  const isFemale = employee.gender === "F" || employee.gender === "Female" || !!employee.isPregnant;
+  
+  const ssoItems = [
+    { id: 1, name: "1. การคัดกรองการได้ยิน Finger Rub Test", eligible: age >= 15, rule: "สิทธิ์อายุ 15 ปีขึ้นไป" },
+    { id: 2, name: "2. การตรวจเต้านมโดยแพทย์หรือบุคลากรสาธารณสุข", eligible: age >= 30 && isFemale, rule: isFemale ? (age >= 40 ? "ตรวจปีละ 1 ครั้ง (อายุ 40+)" : "ตรวจทุก 2 ปี (อายุ 30-39)") : "สิทธิ์เฉพาะสุภาพสตรี" },
+    { id: 3, name: "3. การตรวจตาคัดกรองความผิดปกติโดยจักษุแพทย์", eligible: age >= 40, rule: age >= 55 ? "ตรวจปีละ 1 ครั้ง (อายุ 55+)" : "ตรวจทุก 2 ปี (อายุ 40-54)" },
+    { id: 4, name: "4. ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจ 1 ครั้ง (อายุ 15-34)" },
+    { id: 5, name: "5. การตรวจปัสสาวะ UA", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 6, name: "6. ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 7, name: "7. การทำงานของไต Cr และ eGFR", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
+    { id: 8, name: "8. ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจทุก 5 ปี (อายุ 20-34)" },
+    { id: 9, name: "9. เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35, rule: "สิทธิ์ผู้ที่เกิดก่อน พ.ศ. 2535 (ตรวจ 1 ครั้ง)" },
+    { id: 10, name: "10. มะเร็งปากมดลูก Pap Smear (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale, rule: isFemale ? "หญิงอายุ 30 ปีขึ้นไป (ทุก 3 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
+    { id: 11, name: "11. มะเร็งปากมดลูก Via (เฉพาะเพศหญิง)", eligible: age >= 30 && age <= 55 && isFemale, rule: isFemale ? "หญิงอายุ 30-55 ปี (ทุก 5 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
+    { id: 12, name: "12. มะเร็งปากมดลูก HPV DNA TEST (เฉพาะเพศหญิง)", eligible: age >= 30 && isFemale, rule: isFemale ? "หญิงอายุ 30 ปีขึ้นไป (ทุก 5 ปี)" : "สิทธิ์เฉพาะสุภาพสตรี" },
+    { id: 13, name: "13. การตรวจคัดกรองมะเร็งลำไส้ใหญ่ FIT TEST", eligible: age >= 50, rule: "สิทธิ์อายุ 50 ปีขึ้นไป" },
+    { id: 14, name: "14. การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15, rule: "ตรวจทุก 3 ปี (อายุ 15+)" }
+  ];
+  
+  ssoItems.forEach(item => {
+    const div = document.createElement("div");
+    div.className = `sso-item ${item.eligible ? "eligible" : "ineligible"}`;
+    
+    const iconClass = item.eligible ? "fa-solid fa-circle-check" : "fa-solid fa-circle-minus";
+    
+    div.innerHTML = `
+      <div class="sso-item-content">
+        <i class="${iconClass}"></i>
+        <span>${item.name}</span>
+      </div>
+      <span class="${item.eligible ? "text-muted" : "sso-badge-ineligible"}" style="font-size: 0.78rem;">
+        ${item.rule}
+      </span>
+    `;
+    container.appendChild(div);
+  });
 }
 
 
