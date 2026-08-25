@@ -921,7 +921,7 @@ function renderStatusCard(reg, searchId) {
           { id: 5, name: "การตรวจปัสสาวะ UA", eligible: age >= 35 },
           { id: 6, name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35 },
           { id: 7, name: "การทำงานของไต Cr และ eGFR", eligible: age >= 35 },
-          { id: 8, name: "ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20 },
+          { id: 8, name: "ตรวจไขมันในเลือดได้แค่ 2 ตัวคือ cholesterol & HDL", eligible: age >= 20 },
           { id: 9, name: "เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35 },
           { id: 14, name: "การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15 }
         ];
