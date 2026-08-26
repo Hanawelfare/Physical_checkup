@@ -129,6 +129,9 @@
             <div class="checkup-items-grid" id="checkup-items-list">
               <!-- Populated by JavaScript -->
             </div>
+            <div class="sso-list-note" id="checkup-list-note" style="margin-top: 12px; font-size: 0.85rem; color: #0369a1; font-weight: 500; display: none; padding: 8px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+              <i class="fa-solid fa-circle-info"></i> * รายการสีน้ำเงินรอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
+            </div>
             
             <!-- Cancer screening options for MGR managers -->
             <div class="cancer-selection-wrapper" id="cancer-selection-wrapper" style="display: none;">
@@ -157,49 +160,17 @@
           
           <!-- Social Security (SSO) Checkup Items Section -->
           <div class="sso-checkup-section visible" id="sso-tests-box">
-            <div class="sso-header">
-              <span><i class="fa-solid fa-hand-holding-medical"></i> รายการตรวจสุขภาพสิทธิ์ประกันสังคมเพิ่มเติม (วิเคราะห์ตามเกณฑ์อายุ):</span>
-            </div>
             
             <!-- SSO Rights Notice Box -->
             <div class="sso-notice-box">
               <i class="fa-solid fa-circle-info"></i>
               <div class="sso-notice-text">
                 <strong>ข้อแนะนำการใช้สิทธิ์ตรวจสุขภาพประกันสังคม:</strong>
-                <span style="display: block; margin-bottom: 6px; color: #b45309; font-weight: 700;">• ให้พนักงานนำบัตรประชาชนตัวจริงมาด้วยในวันตรวจสุขภาพ</span>
+                <span style="display: block; margin-bottom: 6px; color: #b45309; font-weight: 700;">• สิทธิ์ประกันสังคมจำเป็นจะต้องใช้บัตรประชาชนตัวจริง ให้ท่านนำบัตรประชาชนตัวจริงมาในวันตรวจสุขภาพด้วย</span>
                 <span style="display: block; margin-bottom: 4px;">• รายการตรวจแต่ละอย่างมีความถี่ต่างกันตามเกณฑ์อายุของประกันสังคม</span>
-                <span style="display: block; margin-bottom: 4px;">• หากท่านเคยใช้สิทธิ์ตรวจประกันสังคมบางรายการจากที่อื่นมาแล้วในรอบปีนี้ <strong>จะไม่สามารถตรวจรายการเดิมซ้ำได้</strong> แต่ยังสามารถใช้สิทธิ์ตรวจรายการที่เหลือได้ค่ะ</span>
-                <span style="display: block; margin-bottom: 6px; color: #b91c1c; font-weight: 700;">• เมื่อยินยอมใช้สิทธิ์ประกันสังคม: ก่อนวันตรวจสุขภาพ ห้ามไปใช้สิทธิ์ตามรายการที่ 1-7 (ตรวจเลือด/ปัสสาวะ/X-ray) ณ โรงพยาบาลอื่น เนื่องจากถ้าไปใช้สิทธิ์แล้ว ในวันตรวจสุขภาพกับบริษัท พนักงานจะต้องชำระเงินค่าตรวจรายการนั้นๆ เอง</span>
-                <span style="display: block;"> <strong>• การเลือกตัวเลือกด้านล่าง:</strong> เลือก <strong>"ยินยอมใช้สิทธิ์"</strong> หากต้องการใช้สิทธิ์ตรวจรายการที่เหลืออยู่ หรือเลือก <strong>"ไม่ยินยอมใช้สิทธิ์"</strong> หากตรวจครบแล้ว หรือต้องการใช้สิทธิ์บริษัทปกติเท่านั้น</span>
-              </div>
-            </div>
-            
-            <div class="sso-items-list" id="sso-items-list">
-              <!-- Populated dynamically by JavaScript -->
-            </div>
-            
-            <!-- SSO Consent Choice Selection -->
-            <div class="sso-consent-wrapper">
-              <div class="sso-consent-title">
-                <i class="fa-solid fa-circle-question"></i> ความประสงค์ยินยอมใช้สิทธิ์ประกันสังคมในการตรวจสุขภาพประจำปี *
-              </div>
-              <div class="sso-consent-grid">
-                <label class="sso-consent-option" id="sso-consent-yes-label">
-                  <input type="radio" name="ssoConsent" value="ยินยอมใช้สิทธิ์ประกันสังคม" required onchange="validateFormCompletion()">
-                  <div class="sso-consent-icon-box"><i class="fa-solid fa-circle-check"></i></div>
-                  <div class="sso-consent-text">
-                    <strong>ยินยอมใช้สิทธิ์ประกันสังคม</strong>
-                    <span>ต้องการตรวจรายการของประกันสังคมที่ได้รับสิทธิ์เพิ่มเติม</span>
-                  </div>
-                </label>
-                <label class="sso-consent-option" id="sso-consent-no-label">
-                  <input type="radio" name="ssoConsent" value="ไม่ยินยอมใช้สิทธิ์ประกันสังคม" onchange="validateFormCompletion()">
-                  <div class="sso-consent-icon-box"><i class="fa-solid fa-circle-xmark"></i></div>
-                  <div class="sso-consent-text">
-                    <strong>ไม่ยินยอมใช้สิทธิ์ประกันสังคม</strong>
-                    <span>ต้องการใช้เฉพาะสิทธิ์ของบริษัทหรือตรวจรอบบริการปกติ</span>
-                  </div>
-                </label>
+                <span style="display: block; margin-bottom: 4px;">• หากท่านเคยใช้สิทธิ์ตรวจประกันสังคมบางรายการจากที่อื่นมาแล้วในรอบปีนี้ <strong>จะไม่สามารถตรวจรายการเดิมซ้ำได้</strong> แต่ยังสามารถใช้สิทธิ์ตรวจรายการอื่นๆ ที่เหลือได้ค่ะ</span>
+                <span style="display: block; margin-bottom: 6px; color: #b91c1c; font-weight: 700;">• เมื่อยินยอมใช้สิทธิ์ประกันสังคม: ก่อนวันตรวจสุขภาพ ห้ามไปใช้สิทธิ์ตามรายการที่ 1-6 (ตรวจเลือด/ปัสสาวะ) ณ โรงพยาบาลอื่น เนื่องจากถ้าไปใช้สิทธิ์แล้ว ในวันตรวจสุขภาพกับบริษัท พนักงานจะต้องชำระเงินค่าตรวจรายการนั้นๆ เอง</span>
+                <span style="display: block;">• รายการตรวจประกันสังคมเพิ่มเติมจะแสดงเป็นเครื่องหมาย * สีน้ำเงินในการ์ดโปรแกรมตรวจสุขภาพของท่านโดยอัตโนมัติ</span>
               </div>
             </div>
           </div>
@@ -250,7 +221,7 @@
 
             <div class="form-group full-width">
               <div class="label-row-slots">
-                <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ * (รอบละ 30 นาที)</label>
+                <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ </label>
                 <span class="realtime-sync-status" id="realtime-sync-status">
                   <span class="pulse-dot"></span>
                   <span class="sync-text">เชื่อมต่อเรียลไทม์</span>
@@ -258,7 +229,7 @@
               </div>
               <div class="time-slots-info-box">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>หมายเหตุ:</strong> พนักงานที่ตรวจโปรแกรมที่ 1 (อายุ 35 ปีขึ้นไป) หรือพนักงานที่ต้องการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจได้เวลา 06:00 - 08:00 น. และให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
+                <span><strong>หมายเหตุ:</strong> เฉพาะช่วงเวลา  06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
               </div>
               
               <div class="time-slots-wrapper">
