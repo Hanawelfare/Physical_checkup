@@ -357,15 +357,7 @@ function handleEmployeeLookupResult(employee, registration = null) {
       }
     }
     
-    // Preset SSO consent selection
-    if (registration.ssoConsent) {
-      const ssoRadio = document.querySelector(`input[name="ssoConsent"][value="${registration.ssoConsent}"]`);
-      if (ssoRadio) {
-        ssoRadio.checked = true;
-      }
-    } else {
-      document.querySelectorAll('input[name="ssoConsent"]').forEach(r => r.checked = false);
-    }
+    // SSO consent selection removed
   } else {
     prevRegCard.style.display = "none";
     
@@ -390,12 +382,7 @@ function handleEmployeeLookupResult(employee, registration = null) {
     STATE.selectedTimeSlot = "";
     document.getElementById("selected-time-slot").value = "";
     
-    // Clear SSO consent selection
-    document.querySelectorAll('input[name="ssoConsent"]').forEach(r => r.checked = false);
   }
-  
-  // Render dynamic SSO checkup list
-  renderSsoCheckupList(employee);
   
   profileBox.style.display = "block";
   profileBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -405,11 +392,72 @@ function handleEmployeeLookupResult(employee, registration = null) {
 // --- Render checkup list dynamically ---
 function renderCheckupList(employee, isPregnant = false) {
   const itemsList = document.getElementById("checkup-items-list");
+  if (!itemsList) return;
   itemsList.innerHTML = "";
   
-  const programGroup = employee.programGroup;
-  const tests = PROGRAM_TESTS[programGroup] || [];
+  // Determine if we should show SSO items (always true now that opt-out is removed)
+  const useSso = true;
   
+  const programGroup = employee.programGroup;
+  const baseTests = PROGRAM_TESTS[programGroup] || [];
+  
+  // Clone base tests
+  let tests = baseTests.map(t => ({ ...t, isSso: false }));
+  
+  const age = parseInt(employee.age || 0, 10);
+  const isFemale = employee.gender === "F" || employee.gender === "Female" || !!employee.isPregnant;
+  
+  if (useSso) {
+    // 3. FBS (age >= 35)
+    if (age >= 35) {
+      let hasFbs = false;
+      tests.forEach(t => {
+        if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
+          t.isSso = true;
+          hasFbs = true;
+        }
+      });
+      if (!hasFbs) {
+        tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
+      }
+    }
+    
+    // 4. Kidney Cr (age >= 35)
+    if (age >= 35) {
+      let hasKidney = false;
+      tests.forEach(t => {
+        if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
+          t.isSso = true;
+          hasKidney = true;
+        }
+      });
+      if (!hasKidney) {
+        tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
+      }
+    }
+    
+    // 5. Lipids
+    if (age >= 20 && age < 35) {
+      // 2 items: cholesterol and HDL
+      tests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL) (งดน้ำและอาหาร)", npo: true, isSso: true });
+    }
+    
+    // 6. HbsAg (age >= 35)
+    if (age >= 35) {
+      let hasHbs = false;
+      tests.forEach(t => {
+        if (t.name.includes("HbsAg") || t.name.includes("ตับอักเสบ")) {
+          t.isSso = true;
+          hasHbs = true;
+        }
+      });
+      if (!hasHbs) {
+        tests.push({ name: "เชื้อไวรัสตับอักเสบ HbsAg", npo: false, isSso: true });
+      }
+    }
+  }
+  
+  // Render the combined tests list
   tests.forEach((t, i) => {
     const item = document.createElement("div");
     const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
@@ -422,18 +470,36 @@ function renderCheckupList(employee, isPregnant = false) {
         <span class="pregnancy-badge">งดตรวจ</span>
       `;
     } else {
-      item.className = t.npo ? "checkup-item npo" : "checkup-item";
+      let nameDisplay = t.name;
+      if (t.isSso) {
+        // Append asterisk
+        nameDisplay = `${t.name} *`;
+      }
+      
+      // Styling class
+      if (t.isSso) {
+        item.className = t.npo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
+      } else {
+        item.className = t.npo ? "checkup-item npo" : "checkup-item";
+      }
+      
       let iconClass = t.npo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
       let extraSpan = t.npo ? `<span class="npo-badge">งดน้ำ-งดอาหาร</span>` : "";
       
       item.innerHTML = `
         <i class="${iconClass}"></i>
-        <span>${i + 1}. ${t.name}</span>
+        <span>${i + 1}. ${nameDisplay}</span>
         ${extraSpan}
       `;
     }
     itemsList.appendChild(item);
   });
+  
+  // Show / Hide the blue SSO note below checklist
+  const ssoNote = document.getElementById("checkup-list-note");
+  if (ssoNote) {
+    ssoNote.style.display = useSso ? "block" : "none";
+  }
   
   // Append Custom Risk Factor checkups
   const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -661,12 +727,7 @@ async function handleRegistrationSubmit(event) {
     cancerTest = checkedRadio.value;
   }
   
-  const ssoConsentRadio = document.querySelector('input[name="ssoConsent"]:checked');
-  if (!ssoConsentRadio) {
-    showToast("กรุณาเลือกความประสงค์ยินยอม/ไม่ยินยอมใช้สิทธิ์ประกันสังคม", "warning");
-    return;
-  }
-  const ssoConsent = ssoConsentRadio.value;
+  const ssoConsent = "ยินยอมใช้สิทธิ์ประกันสังคม";
   
   const isPregnant = !!STATE.activeEmployee.isPregnant;
   const payload = {
@@ -845,11 +906,70 @@ function renderStatusCard(reg, searchId) {
   
   document.getElementById("card-program-title").textContent = reg.programGroup;
   
-  // Render test items checklist exactly like Image 1
+  // Render test items checklist exactly like main list
   const checklistContainer = document.getElementById("card-tests-list-container");
   checklistContainer.innerHTML = "";
   
-  const tests = PROGRAM_TESTS[reg.programGroup] || [];
+  const useSso = true; // Always display SSO items on ticket
+  
+  const programGroup = reg.programGroup;
+  const baseTests = PROGRAM_TESTS[programGroup] || [];
+  
+  // Clone base tests
+  let tests = baseTests.map(t => ({ ...t, isSso: false }));
+  
+  const age = parseInt(reg.age || 0, 10);
+  const isFemale = reg.gender === "F" || reg.gender === "Female" || !!reg.isPregnant;
+  
+  if (useSso) {
+    // 3. FBS (age >= 35)
+    if (age >= 35) {
+      let hasFbs = false;
+      tests.forEach(t => {
+        if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
+          t.isSso = true;
+          hasFbs = true;
+        }
+      });
+      if (!hasFbs) {
+        tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
+      }
+    }
+    
+    // 4. Kidney Cr (age >= 35)
+    if (age >= 35) {
+      let hasKidney = false;
+      tests.forEach(t => {
+        if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
+          t.isSso = true;
+          hasKidney = true;
+        }
+      });
+      if (!hasKidney) {
+        tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
+      }
+    }
+    
+    // 5. Lipids
+    if (age >= 20 && age < 35) {
+      tests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL) (งดน้ำและอาหาร)", npo: true, isSso: true });
+    }
+    
+    // 6. HbsAg (age >= 35)
+    if (age >= 35) {
+      let hasHbs = false;
+      tests.forEach(t => {
+        if (t.name.includes("HbsAg") || t.name.includes("ตับอักเสบ")) {
+          t.isSso = true;
+          hasHbs = true;
+        }
+      });
+      if (!hasHbs) {
+        tests.push({ name: "เชื้อไวรัสตับอักเสบ HbsAg", npo: false, isSso: true });
+      }
+    }
+  }
+  
   tests.forEach((t, index) => {
     const item = document.createElement("div");
     const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
@@ -861,12 +981,20 @@ function renderStatusCard(reg, searchId) {
         <span>${index + 1}. ${t.name} *งดตรวจเนื่องจากตั้งครรภ์*</span>
       `;
     } else {
-      item.className = "ticket-test-item";
+      let nameDisplay = t.name;
+      if (t.isSso) {
+        nameDisplay = `${t.name} *`;
+        item.className = "ticket-test-item sso-merged-item";
+      } else {
+        item.className = "ticket-test-item";
+      }
       
       // Add extra text for NPO fasting items
-      let testNameDisplay = `${index + 1}. ${t.name}`;
-      if (t.name.includes("ไขมัน") || t.name.includes("น้ำตาล")) {
-        testNameDisplay += " *งดน้ำงดอาหาร*";
+      let testNameDisplay = `${index + 1}. ${nameDisplay}`;
+      if (t.npo) {
+        if (!testNameDisplay.includes("งดน้ำ") && !testNameDisplay.includes("งดอาหาร")) {
+          testNameDisplay += " *งดน้ำงดอาหาร*";
+        }
       }
       
       item.innerHTML = `
@@ -900,58 +1028,12 @@ function renderStatusCard(reg, searchId) {
       <span>${currentIdx}. ${reg.cancerTest}</span>
     `;
     checklistContainer.appendChild(item);
+    currentIdx++;
   }
   
-  // Render SSO checkup items list on Ticket
   const cardSsoSection = document.getElementById("card-sso-section");
-  const cardSsoConsentStatus = document.getElementById("card-sso-consent-status");
-  const cardSsoListContainer = document.getElementById("card-sso-list-container");
-  
-  if (cardSsoSection && cardSsoConsentStatus && cardSsoListContainer) {
-    if (reg.ssoConsent) {
-      cardSsoSection.style.display = "block";
-      if (reg.ssoConsent === "ยินยอมใช้สิทธิ์ประกันสังคม") {
-        cardSsoConsentStatus.className = "ticket-sso-consent-status consent-yes";
-        cardSsoConsentStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> ยินยอมใช้สิทธิ์ประกันสังคมในการตรวจสุขภาพประจำปี`;
-        
-        const age = parseInt(reg.age || 0, 10);
-        const isFemale = reg.gender === "F" || reg.gender === "Female" || !!reg.isPregnant;
-        const ssoItems = [
-          { id: 4, name: "ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15 },
-          { id: 5, name: "การตรวจปัสสาวะ UA", eligible: age >= 35 },
-          { id: 6, name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35 },
-          { id: 7, name: "การทำงานของไต Cr และ eGFR", eligible: age >= 35 },
-          { id: 8, name: "ตรวจไขมันในเลือดได้แค่ 2 ตัวคือ cholesterol & HDL", eligible: age >= 20 },
-          { id: 9, name: "เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35 },
-          { id: 14, name: "การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15 }
-        ];
-        
-        cardSsoListContainer.innerHTML = "";
-        let countSsoIdx = 1;
-        ssoItems.forEach(item => {
-          if (item.eligible) {
-            const div = document.createElement("div");
-            div.className = "ticket-sso-item";
-            div.innerHTML = `
-              <i class="fa-solid fa-circle-check"></i>
-              <span>${countSsoIdx}. ${item.name}</span>
-            `;
-            cardSsoListContainer.appendChild(div);
-            countSsoIdx++;
-          }
-        });
-        
-        if (cardSsoListContainer.innerHTML === "") {
-          cardSsoListContainer.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted); padding: 5px;">ไม่มีรายการตรวจที่เข้าเกณฑ์อายุของท่าน</div>`;
-        }
-      } else {
-        cardSsoConsentStatus.className = "ticket-sso-consent-status consent-no";
-        cardSsoConsentStatus.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ไม่ยินยอมใช้สิทธิ์ประกันสังคม (ตรวจเฉพาะสิทธิ์ปกติของบริษัท)`;
-        cardSsoListContainer.innerHTML = "";
-      }
-    } else {
-      cardSsoSection.style.display = "none";
-    }
+  if (cardSsoSection) {
+    cardSsoSection.style.display = "none";
   }
   
   cardContainer.classList.add("visible");
@@ -1106,6 +1188,9 @@ function validateFormCompletion() {
     return;
   }
   
+  // Re-render checklist (SSO items are always merged now)
+  renderCheckupList(STATE.activeEmployee, !!STATE.activeEmployee.isPregnant);
+  
   const phone = document.getElementById("reg-phone").value.trim();
   const isPhoneValid = /^\d{1,4}$/.test(phone);
   
@@ -1119,9 +1204,7 @@ function validateFormCompletion() {
     isCancerValid = document.querySelector('input[name="cancerTest"]:checked') !== null;
   }
   
-  const isSsoConsentValid = document.querySelector('input[name="ssoConsent"]:checked') !== null;
-  
-  const isFormComplete = isPhoneValid && shift && location && dateStr && timeStr && isCancerValid && isSsoConsentValid;
+  const isFormComplete = isPhoneValid && shift && location && dateStr && timeStr && isCancerValid;
   submitBtn.disabled = !isFormComplete;
 }
 
@@ -1831,41 +1914,6 @@ function copyReminderBulk() {
     });
 }
 
-function renderSsoCheckupList(employee) {
-  const container = document.getElementById("sso-items-list");
-  if (!container) return;
-  
-  container.innerHTML = "";
-  const age = parseInt(employee.age || 0, 10);
-  const isFemale = employee.gender === "F" || employee.gender === "Female" || !!employee.isPregnant;
-  
-  const ssoItems = [
-    { id: 4, name: "1. ความสมบูรณ์ของเม็ดเลือด CBC", eligible: age >= 15, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจ 1 ครั้ง (อายุ 15-34)" },
-    { id: 5, name: "2. การตรวจปัสสาวะ UA", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 6, name: "3. ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 7, name: "4. การทำงานของไต Cr และ eGFR", eligible: age >= 35, rule: "สิทธิ์อายุ 35 ปีขึ้นไป" },
-    { id: 8, name: "5. ตรวจไขมันในเลือด Total Cho & HDL Cho", eligible: age >= 20, rule: age >= 35 ? "ตรวจปีละ 1 ครั้ง (อายุ 35+)" : "ตรวจทุก 5 ปี (อายุ 20-34)" },
-    { id: 9, name: "6. เชื้อไวรัสตับอักเสบ HbsAg", eligible: age >= 35, rule: "สิทธิ์ผู้ที่เกิดก่อน พ.ศ. 2535 (ตรวจ 1 ครั้ง)" },
-    { id: 14, name: "7. การถ่ายภาพรังสีทรวงอก (Chest X-ray)", eligible: age >= 15, rule: "ตรวจทุก 3 ปี (อายุ 15+)" }
-  ];
-  
-  ssoItems.forEach(item => {
-    const div = document.createElement("div");
-    div.className = `sso-item ${item.eligible ? "eligible" : "ineligible"}`;
-    
-    const iconClass = item.eligible ? "fa-solid fa-circle-check" : "fa-solid fa-circle-minus";
-    
-    div.innerHTML = `
-      <div class="sso-item-content">
-        <i class="${iconClass}"></i>
-        <span>${item.name}</span>
-      </div>
-      <span class="${item.eligible ? "text-muted" : "sso-badge-ineligible"}" style="font-size: 0.78rem;">
-        ${item.rule}
-      </span>
-    `;
-    container.appendChild(div);
-  });
-}
+
 
 
