@@ -73,7 +73,7 @@ const PROGRAM_TESTS = {
     { name: "ไขมัน (Cholesterol, TG, LDL, HDL)", npo: true },
     { name: "น้ำตาล (FBS)", npo: true },
     { name: "การทำงานของตับ (SGOT, SGPT)", npo: false },
-    { name: "การทำงานของไต (BUN, Cr)", npo: false },
+    { name: "การทำงานของไต (BUN, Cr, eGFR)", npo: false },
     { name: "กรดยูริค (เก๊าท์)", npo: false },
     { name: "ตรวจหาน้ำตาลสะสม (คัดกรองโรคเบาหวาน) (HbA1C)", npo: false }
   ],
@@ -412,12 +412,13 @@ function renderCheckupList(employee, isPregnant = false) {
     if (age >= 35) {
       let hasFbs = false;
       tests.forEach(t => {
+        if (programGroup === "โปรแกรม MGR") return;
         if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
           t.isSso = true;
           hasFbs = true;
         }
       });
-      if (!hasFbs) {
+      if (!hasFbs && programGroup !== "โปรแกรม MGR") {
         tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
       }
     }
@@ -426,12 +427,13 @@ function renderCheckupList(employee, isPregnant = false) {
     if (age >= 35) {
       let hasKidney = false;
       tests.forEach(t => {
+        if (programGroup === "โปรแกรม MGR") return;
         if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
           t.isSso = true;
           hasKidney = true;
         }
       });
-      if (!hasKidney) {
+      if (!hasKidney && programGroup !== "โปรแกรม MGR") {
         tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
       }
     }
@@ -926,12 +928,13 @@ function renderStatusCard(reg, searchId) {
     if (age >= 35) {
       let hasFbs = false;
       tests.forEach(t => {
+        if (programGroup === "โปรแกรม MGR") return;
         if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
           t.isSso = true;
           hasFbs = true;
         }
       });
-      if (!hasFbs) {
+      if (!hasFbs && programGroup !== "โปรแกรม MGR") {
         tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
       }
     }
@@ -940,12 +943,13 @@ function renderStatusCard(reg, searchId) {
     if (age >= 35) {
       let hasKidney = false;
       tests.forEach(t => {
+        if (programGroup === "โปรแกรม MGR") return;
         if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
           t.isSso = true;
           hasKidney = true;
         }
       });
-      if (!hasKidney) {
+      if (!hasKidney && programGroup !== "โปรแกรม MGR") {
         tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
       }
     }
