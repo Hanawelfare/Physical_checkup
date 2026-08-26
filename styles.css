@@ -2562,4 +2562,23 @@ select:disabled {
   }
 }
 
+/* --- SSO Merged Items Styles --- */
+.checkup-item.sso-merged-item {
+  color: #0369a1 !important; /* deep blue */
+  border-color: #bae6fd !important; /* light blue border */
+  background: #f0f9ff !important; /* light blue background */
+}
+
+.checkup-item.sso-merged-item i {
+  color: #0284c7 !important; /* sky-600 */
+}
+
+.ticket-test-item.sso-merged-item {
+  color: #0369a1 !important;
+}
+
+.ticket-test-item.sso-merged-item i {
+  color: #0284c7 !important;
+}
+
 
