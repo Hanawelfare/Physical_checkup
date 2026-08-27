@@ -290,7 +290,7 @@ function handleEmployeeLookupResult(employee, registration = null) {
   }
   
   if (employee.checkupRight && employee.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
-    showToast(`ขออภัย รหัสพนักงานนี้ยังไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี เนื่องจากจากเข้างานยังไม่ครบ 6 เดือน (${employee.checkupRight})`, "error");
+    showToast(`ขออภัย รหัสพนักงานนี้ไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี (${employee.checkupRight})`, "error");
     profileBox.style.display = "none";
     STATE.activeEmployee = null;
     return;
@@ -459,6 +459,12 @@ function renderCheckupList(employee, isPregnant = false) {
     }
   }
   
+  // 8. NHSO Items (HIV and HPV)
+  tests.push({ name: "ชุดตรวจ HIV ฟรี", npo: false, isNhso: true });
+  if (isFemale) {
+    tests.push({ name: "ชุดตรวจ HPV ฟรี", npo: false, isNhso: true });
+  }
+  
   // Render the combined tests list
   tests.forEach((t, i) => {
     const item = document.createElement("div");
@@ -476,11 +482,16 @@ function renderCheckupList(employee, isPregnant = false) {
       if (t.isSso) {
         // Append asterisk
         nameDisplay = `${t.name} *`;
+      } else if (t.isNhso) {
+        // Append double asterisks
+        nameDisplay = `${t.name} **`;
       }
       
       // Styling class
       if (t.isSso) {
         item.className = t.npo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
+      } else if (t.isNhso) {
+        item.className = t.npo ? "checkup-item npo nhso-merged-item" : "checkup-item nhso-merged-item";
       } else {
         item.className = t.npo ? "checkup-item npo" : "checkup-item";
       }
@@ -501,6 +512,11 @@ function renderCheckupList(employee, isPregnant = false) {
   const ssoNote = document.getElementById("checkup-list-note");
   if (ssoNote) {
     ssoNote.style.display = useSso ? "block" : "none";
+  }
+  
+  const nhsoNote = document.getElementById("checkup-nhso-note");
+  if (nhsoNote) {
+    nhsoNote.style.display = "block";
   }
   
   // Append Custom Risk Factor checkups
@@ -974,6 +990,12 @@ function renderStatusCard(reg, searchId) {
     }
   }
   
+  // 8. NHSO Items (HIV and HPV) on Ticket
+  tests.push({ name: "ชุดตรวจ HIV ฟรี", npo: false, isNhso: true });
+  if (isFemale) {
+    tests.push({ name: "ชุดตรวจ HPV ฟรี", npo: false, isNhso: true });
+  }
+  
   tests.forEach((t, index) => {
     const item = document.createElement("div");
     const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
@@ -989,6 +1011,9 @@ function renderStatusCard(reg, searchId) {
       if (t.isSso) {
         nameDisplay = `${t.name} *`;
         item.className = "ticket-test-item sso-merged-item";
+      } else if (t.isNhso) {
+        nameDisplay = `${t.name} **`;
+        item.className = "ticket-test-item nhso-merged-item";
       } else {
         item.className = "ticket-test-item";
       }
