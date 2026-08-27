@@ -290,7 +290,7 @@ function handleEmployeeLookupResult(employee, registration = null) {
   }
   
   if (employee.checkupRight && employee.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
-    showToast(`ขออภัย รหัสพนักงานนี้ไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี (${employee.checkupRight})`, "error");
+    showToast("ขออภัย ท่านยังไม่สามารถตรวจสุขภาพประจำปีนี้ได้ เนื่องจากเข้างานยังไม่ครบ 6 เดือน", "error");
     profileBox.style.display = "none";
     STATE.activeEmployee = null;
     return;
