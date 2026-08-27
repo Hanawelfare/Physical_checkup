@@ -2581,4 +2581,23 @@ select:disabled {
   color: #0284c7 !important;
 }
 
+/* --- NHSO Merged Items Styles (Pink) --- */
+.checkup-item.nhso-merged-item {
+  color: #be185d !important; /* pink-700 */
+  border-color: #fbcfe8 !important; /* pink-200 border */
+  background: #fdf2f8 !important; /* pink-50 background */
+}
+
+.checkup-item.nhso-merged-item i {
+  color: #db2777 !important; /* pink-600 */
+}
+
+.ticket-test-item.nhso-merged-item {
+  color: #be185d !important;
+}
+
+.ticket-test-item.nhso-merged-item i {
+  color: #db2777 !important;
+}
+
 
