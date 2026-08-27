@@ -254,20 +254,42 @@ async function lookupEmployee() {
         handleEmployeeLookupResult(null, null);
       }
     } else {
-      const res = await callApi("getEmployeeData", [empId]);
+      let res = null;
+      let isFallbackTriggered = false;
+      try {
+        res = await callApi("getEmployeeAndRegistration", [empId]);
+      } catch (apiErr) {
+        console.warn("getEmployeeAndRegistration call failed:", apiErr);
+      }
+      
       if (res && res.success && res.data) {
-        let reg = null;
-        try {
-          const regRes = await callApi("getRegistrationByEmpId", [empId]);
-          if (regRes && regRes.success) {
-            reg = regRes.data;
-          }
-        } catch (e) {
-          console.warn("Could not fetch registration:", e);
-        }
-        handleEmployeeLookupResult(res.data, reg);
+        handleEmployeeLookupResult(res.data.employee, res.data.registration);
       } else {
-        throw new Error((res && res.error) || "เกิดข้อผิดพลาดในการดึงข้อมูล");
+        // Fallback: If backend script is not updated yet (throws Action not found)
+        const errMsg = (res && res.error) || "";
+        if (errMsg.indexOf("Action not found") !== -1 || errMsg.indexOf("not found") !== -1) {
+          isFallbackTriggered = true;
+          try {
+            const empRes = await callApi("getEmployeeData", [empId]);
+            if (empRes && empRes.success && empRes.data) {
+              let reg = null;
+              try {
+                const regRes = await callApi("getRegistrationByEmpId", [empId]);
+                if (regRes && regRes.success) {
+                  reg = regRes.data;
+                }
+              } catch (e) {
+                console.warn("Could not fetch registration in fallback:", e);
+              }
+              handleEmployeeLookupResult(empRes.data, reg);
+              showToast("โปรดอัปเดตสคริปต์ Google Script หลังบ้านเพื่อเปิดใช้งานการค้นหาความเร็วสูง", "warning");
+              return;
+            }
+          } catch (fallbackErr) {
+            console.error("Fallback lookup failed:", fallbackErr);
+          }
+        }
+        throw new Error(errMsg || "เกิดข้อผิดพลาดในการดึงข้อมูล");
       }
     }
   } catch (err) {
@@ -459,12 +481,6 @@ function renderCheckupList(employee, isPregnant = false) {
     }
   }
   
-  // 8. NHSO Items (HIV and HPV)
-  tests.push({ name: "ชุดตรวจ HIV ฟรี", npo: false, isNhso: true });
-  if (isFemale) {
-    tests.push({ name: "ชุดตรวจ HPV ฟรี", npo: false, isNhso: true });
-  }
-  
   // Render the combined tests list
   tests.forEach((t, i) => {
     const item = document.createElement("div");
@@ -482,16 +498,11 @@ function renderCheckupList(employee, isPregnant = false) {
       if (t.isSso) {
         // Append asterisk
         nameDisplay = `${t.name} *`;
-      } else if (t.isNhso) {
-        // Append double asterisks
-        nameDisplay = `${t.name} **`;
       }
       
       // Styling class
       if (t.isSso) {
         item.className = t.npo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
-      } else if (t.isNhso) {
-        item.className = t.npo ? "checkup-item npo nhso-merged-item" : "checkup-item nhso-merged-item";
       } else {
         item.className = t.npo ? "checkup-item npo" : "checkup-item";
       }
@@ -519,20 +530,29 @@ function renderCheckupList(employee, isPregnant = false) {
     nhsoNote.style.display = "block";
   }
   
-  // Append Custom Risk Factor checkups
-  const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
-  if (riskItems.length > 0) {
-    const startIdx = tests.length + 1;
-    riskItems.forEach((riskText, idx) => {
-      const item = document.createElement("div");
-      item.className = "checkup-item risk-item";
-      item.innerHTML = `
-        <i class="fa-solid fa-stethoscope"></i>
-        <span>${startIdx + idx}. ${riskText}</span>
-        <span class="risk-badge">ปัจจัยเสี่ยง</span>
-      `;
-      itemsList.appendChild(item);
-    });
+  // Render Custom Risk Factor checkups in a separate card/container
+  const riskBox = document.getElementById("risk-tests-box");
+  const riskItemsList = document.getElementById("risk-items-list");
+  
+  if (riskBox && riskItemsList) {
+    riskItemsList.innerHTML = ""; // Clear
+    const riskItems = employee.riskProgram ? employee.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
+    if (riskItems.length > 0) {
+      riskBox.style.display = "block";
+      riskItems.forEach((riskText, idx) => {
+        const item = document.createElement("div");
+        item.className = "checkup-item risk-item";
+        item.style.background = "#ffffff";
+        item.innerHTML = `
+          <i class="fa-solid fa-stethoscope" style="color: #ef4444;"></i>
+          <span>${idx + 1}. ${riskText}</span>
+          <span class="risk-badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">ปัจจัยเสี่ยง</span>
+        `;
+        riskItemsList.appendChild(item);
+      });
+    } else {
+      riskBox.style.display = "none";
+    }
   }
 }
 
@@ -990,12 +1010,6 @@ function renderStatusCard(reg, searchId) {
     }
   }
   
-  // 8. NHSO Items (HIV and HPV) on Ticket
-  tests.push({ name: "ชุดตรวจ HIV ฟรี", npo: false, isNhso: true });
-  if (isFemale) {
-    tests.push({ name: "ชุดตรวจ HPV ฟรี", npo: false, isNhso: true });
-  }
-  
   tests.forEach((t, index) => {
     const item = document.createElement("div");
     const isXray = t.name.includes("X-RAY") || t.name.includes("X-ray") || t.name.includes("เอกซเรย์");
@@ -1011,9 +1025,6 @@ function renderStatusCard(reg, searchId) {
       if (t.isSso) {
         nameDisplay = `${t.name} *`;
         item.className = "ticket-test-item sso-merged-item";
-      } else if (t.isNhso) {
-        nameDisplay = `${t.name} **`;
-        item.className = "ticket-test-item nhso-merged-item";
       } else {
         item.className = "ticket-test-item";
       }
@@ -1034,19 +1045,28 @@ function renderStatusCard(reg, searchId) {
     checklistContainer.appendChild(item);
   });
   
-  // Append Custom Risk Factor checkups on Ticket
-  const riskItems = reg.riskProgram ? reg.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
-  let currentIdx = tests.length + 1;
-  riskItems.forEach((riskText) => {
-    const item = document.createElement("div");
-    item.className = "ticket-test-item ticket-risk-item";
-    item.innerHTML = `
-      <i class="fa-solid fa-stethoscope"></i>
-      <span>${currentIdx}. ${riskText} *ปัจจัยเสี่ยง*</span>
-    `;
-    checklistContainer.appendChild(item);
-    currentIdx++;
-  });
+  // Render Custom Risk Factor checkups on Ticket in a separate section
+  const ticketRiskSection = document.getElementById("card-risk-section");
+  const ticketRiskList = document.getElementById("card-risk-list-container");
+  
+  if (ticketRiskSection && ticketRiskList) {
+    ticketRiskList.innerHTML = ""; // Clear
+    const riskItems = reg.riskProgram ? reg.riskProgram.split(',').map(s => s.trim()).filter(Boolean) : [];
+    if (riskItems.length > 0) {
+      ticketRiskSection.style.display = "block";
+      riskItems.forEach((riskText, idx) => {
+        const item = document.createElement("div");
+        item.className = "ticket-test-item ticket-risk-item";
+        item.innerHTML = `
+          <i class="fa-solid fa-stethoscope" style="color: #ef4444;"></i>
+          <span>${idx + 1}. ${riskText}</span>
+        `;
+        ticketRiskList.appendChild(item);
+      });
+    } else {
+      ticketRiskSection.style.display = "none";
+    }
+  }
   
   // Append Selected Cancer Checkup if manager
   if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
