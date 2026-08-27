@@ -133,7 +133,7 @@
               <i class="fa-solid fa-circle-info"></i> * รายการสีน้ำเงินรอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
             </div>
             <div class="nhso-list-note" id="checkup-nhso-note" style="margin-top: 8px; font-size: 0.85rem; color: #be185d; font-weight: 500; display: none; padding: 8px 12px; background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px;">
-              <i class="fa-solid fa-circle-info"></i> ** รายการสีชมพูรอเช็คสิทธิ์ สปสช. หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
+              <i class="fa-solid fa-circle-info"></i> หมายเหตุเพิ่มเติม: ท่านสามารถนำบัตรประชาชนตัวจริงมารับชุดตรวจ HIV และ HPV ฟรี ณ จุดลงทะเบียน (เงื่อนไขตามที่ สปสช. กำหนด)
             </div>
             
             <!-- Cancer screening options for MGR managers -->
@@ -159,6 +159,16 @@
                   <span class="cancer-option-name">4. ตรวจคัดกรองมะเร็งรังไข่ (CA125)</span>
                 </label>
               </div>
+          </div>
+          
+          <!-- Dynamic Risk Program Test Items details -->
+          <div class="program-checkup-section risk-checkup-section" id="risk-tests-box" style="display: none; margin-top: 15px; border-left: 5px solid #ef4444; background: #fff5f5; border-color: #fee2e2 #e2e8f0 #e2e8f0 #ef4444;">
+            <div class="program-header" style="color: #b91c1c; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+              <span><i class="fa-solid fa-stethoscope"></i> รายการตรวจตามปัจจัยเสี่ยงของท่าน:</span>
+            </div>
+            <div class="checkup-items-grid" id="risk-items-list">
+              <!-- Populated by JavaScript -->
+            </div>
           </div>
           
           <!-- Social Security (SSO) Checkup Items Section -->
@@ -329,6 +339,16 @@
               </h4>
               <div class="ticket-tests-columns" id="card-tests-list-container">
                 <!-- Checkup items checklist rendered dynamically -->
+              </div>
+            </div>
+            
+            <!-- Row 3.2: Risk factors list checklists -->
+            <div class="ticket-tests-section" id="card-risk-section" style="display: none; margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 15px;">
+              <h4 class="section-subtitle" style="color: #b91c1c;">
+                <i class="fa-solid fa-stethoscope"></i> รายการตรวจตามปัจจัยเสี่ยงของท่าน
+              </h4>
+              <div class="ticket-tests-columns" id="card-risk-list-container">
+                <!-- Risk items checklist rendered dynamically -->
               </div>
             </div>
             
