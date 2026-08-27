@@ -1336,6 +1336,11 @@ select:disabled {
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Support both PC and Mobile screens */
+  width: 90%;
+  max-width: 500px;
+  box-sizing: border-box;
+  word-break: break-word;
 }
 
 .toast-msg.show {
@@ -1345,6 +1350,7 @@ select:disabled {
 
 .toast-msg i {
   font-size: 1.05rem;
+  flex-shrink: 0;
 }
 
 .toast-msg.success { border-left-color: var(--success-color); }
