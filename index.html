@@ -132,6 +132,9 @@
             <div class="sso-list-note" id="checkup-list-note" style="margin-top: 12px; font-size: 0.85rem; color: #0369a1; font-weight: 500; display: none; padding: 8px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
               <i class="fa-solid fa-circle-info"></i> * รายการสีน้ำเงินรอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
             </div>
+            <div class="nhso-list-note" id="checkup-nhso-note" style="margin-top: 8px; font-size: 0.85rem; color: #be185d; font-weight: 500; display: none; padding: 8px 12px; background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px;">
+              <i class="fa-solid fa-circle-info"></i> ** รายการสีชมพูรอเช็คสิทธิ์ สปสช. หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
+            </div>
             
             <!-- Cancer screening options for MGR managers -->
             <div class="cancer-selection-wrapper" id="cancer-selection-wrapper" style="display: none;">
@@ -161,17 +164,9 @@
           <!-- Social Security (SSO) Checkup Items Section -->
           <div class="sso-checkup-section visible" id="sso-tests-box">
             
-            <!-- SSO Rights Notice Box -->
-            <div class="sso-notice-box">
-              <i class="fa-solid fa-circle-info"></i>
-              <div class="sso-notice-text">
-                <strong>ข้อแนะนำการใช้สิทธิ์ตรวจสุขภาพประกันสังคม:</strong>
-                <span style="display: block; margin-bottom: 6px; color: #b45309; font-weight: 700;">• สิทธิ์ประกันสังคมจำเป็นจะต้องใช้บัตรประชาชนตัวจริง ให้ท่านนำบัตรประชาชนตัวจริงมาในวันตรวจสุขภาพด้วยเพื่อรับสิทธิ์และรับชุดตรวจ HIV & HPV ฟรี</span>
-                <span style="display: block; margin-bottom: 4px;">• รายการตรวจแต่ละอย่างมีความถี่ต่างกันตามเกณฑ์อายุของประกันสังคม</span>
-                <span style="display: block; margin-bottom: 4px;">• หากท่านเคยใช้สิทธิ์ตรวจประกันสังคมบางรายการจากที่อื่นมาแล้วในรอบปีนี้ <strong>จะไม่สามารถตรวจรายการเดิมซ้ำได้</strong> แต่ยังสามารถใช้สิทธิ์ตรวจรายการอื่นๆ ที่เหลือได้ค่ะ</span>
-                <span style="display: block; margin-bottom: 6px; color: #b91c1c; font-weight: 700;">• ใช้สิทธิ์ประกันสังคม: ก่อนวันตรวจสุขภาพ ห้ามไปใช้สิทธิ์ตามรายการ * กรอบสีน้ำเงิน (ตรวจเลือด/ปัสสาวะ/x-ray) ณ โรงพยาบาลอื่น เนื่องจากถ้าไปใช้สิทธิ์แล้ว ในวันตรวจสุขภาพกับบริษัท พนักงานจะต้องชำระเงินค่าตรวจรายการนั้นๆ เอง</span>
-                <span style="display: block;">• รายการตรวจประกันสังคมเพิ่มเติมจะแสดงเป็นเครื่องหมาย * สีน้ำเงินในการ์ดโปรแกรมตรวจสุขภาพของท่านโดยอัตโนมัติ</span>
-              </div>
+            <!-- SSO & NHSO Guidelines Infographic -->
+            <div class="sso-notice-infographic" style="margin-bottom: 20px; text-align: center;">
+              <img src="sso_nhso_guidelines.jpg" alt="ข้อแนะนำการใช้สิทธิ์ตรวจสุขภาพประกันสังคม และสิทธิ์ สปสช." style="max-width: 100%; height: auto; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
             </div>
           </div>
         </div>
@@ -221,7 +216,7 @@
 
             <div class="form-group full-width">
               <div class="label-row-slots">
-                <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ </label>
+                <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ</label>
                 <span class="realtime-sync-status" id="realtime-sync-status">
                   <span class="pulse-dot"></span>
                   <span class="sync-text">เชื่อมต่อเรียลไทม์</span>
@@ -229,7 +224,7 @@
               </div>
               <div class="time-slots-info-box">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>หมายเหตุ:</strong> เฉพาะช่วงเวลา  06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
+                <span><strong>หมายเหตุ:</strong> เฉพาะช่วงเวลา 06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
               </div>
               
               <div class="time-slots-wrapper">
@@ -375,6 +370,14 @@
             </div>
           </div>
         </div>
+        
+        <!-- Checkup steps workflow image -->
+        <div class="steps-workflow-section no-print" style="margin-top: 24px; background: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; text-align: center;">
+          <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-route" style="color: #3b82f6;"></i> ขั้นตอนการเข้ารับการตรวจสุขภาพประจำปี 2569
+          </h3>
+          <img src="steps.jpg" alt="ขั้นตอนการตรวจสุขภาพ ประจำปี 2569" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;">
+        </div>
       </div>
       
     </div>
@@ -382,7 +385,7 @@
     <!-- TAB 3: SPECIAL SELF-PAY CATALOG -->
     <div class="tab-content" id="tab-special-catalog">
       <div class="catalog-header-card">
-        <h2><i class="fa-solid fa-notes-medical text-primary"></i> รายการตรวจสุขภาพพิเศษประจำปี 2569 (ชำระเงินเอง)</h2>
+        <h2><i class="fa-solid fa-notes-medical text-primary"></i> รายการตรวจสุขภาพพิเศษประจำปี 2568 (ชำระเงินเอง)</h2>
         <p>พนักงานสามารถเลือกรับบริการตรวจเพิ่มเติมนอกเหนือจากสิทธิ์พื้นฐาน โดยชำระเงินเอง ณ วันที่ตรวจสุขภาพ</p>
         
         <!-- Welfare details block -->
