@@ -93,6 +93,17 @@ function getEmployeeData(employeeId) {
   if (/^\d+$/.test(idToFind)) {
     idToFind = idToFind.padStart(6, '0'); // Pad to 6 digits as per prompt
   }
+
+  // Performance Optimization: Check script cache first to support 2,000 concurrent users
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get("emp_" + idToFind);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.warn("Cache read error in getEmployeeData: " + e.toString());
+  }
   
   var lastRow = sheet.getLastRow();
   if (lastRow <= 1) return null;
@@ -100,7 +111,8 @@ function getEmployeeData(employeeId) {
   // Read headers only (1 row) to dynamically map column letter
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h).trim(); });
   var colId = headers.indexOf("รหัสพนักงาน");
-  if (colId === -1) throw new Error("Header 'รหัสพนักงาน' not found in Name sheet.");
+  if (colId === -1) colId = headers.indexOf("fempno");
+  if (colId === -1) throw new Error("Header 'รหัสพนักงาน' or 'fempno' not found in Name sheet.");
   
   var colLetter = getColumnLetter(colId + 1);
   
@@ -114,12 +126,25 @@ function getEmployeeData(employeeId) {
   var row = sheet.getRange(rowIdx, 1, 1, headers.length).getValues()[0];
   
   var colName = headers.indexOf("ชื่อ");
+  if (colName === -1) colName = headers.indexOf("fempnamet");
+  
   var colLastName = headers.indexOf("นามสกุล");
+  if (colLastName === -1) colLastName = headers.indexOf("fsurnamet");
+  
   var colDept = headers.indexOf("แผนก");
+  if (colDept === -1) colDept = headers.indexOf("fdeptcode");
+  
   var colLoc = headers.indexOf("สถานที่");
   var colProg = headers.indexOf("โปรแกรมตรวจ");
+  
   var colAge = headers.indexOf("อายุ");
+  if (colAge === -1) colAge = headers.indexOf("fbirth");
+  
   var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
+  
+  var colGender = headers.indexOf("เพศ");
+  if (colGender === -1) colGender = headers.indexOf("gender");
+  if (colGender === -1) colGender = headers.indexOf("sex");
   
   // Find pregnancy column dynamically by checking if header contains "ตั้งครรภ์"
   var colPreg = -1;
@@ -139,7 +164,30 @@ function getEmployeeData(employeeId) {
     }
   }
   
-  var ageVal = colAge !== -1 ? parseInt(row[colAge], 10) : 0;
+  var ageVal = 0;
+  if (colAge !== -1) {
+    var ageRaw = row[colAge];
+    if (ageRaw instanceof Date) {
+      ageVal = 2026 - ageRaw.getFullYear();
+    } else if (ageRaw) {
+      var ageStr = String(ageRaw).trim();
+      var parsedAge = parseInt(ageStr, 10);
+      if (!isNaN(parsedAge) && parsedAge > 0 && parsedAge < 120) {
+        ageVal = parsedAge;
+      } else {
+        // Try parsing date string like "25-Mar-67"
+        var dateParts = ageStr.split("-");
+        if (dateParts.length === 3) {
+          var yearPart = parseInt(dateParts[2], 10);
+          if (!isNaN(yearPart)) {
+            // Assume 1900s for two-digit years > current year
+            var birthYear = yearPart < 100 ? (yearPart > 26 ? 1900 + yearPart : 2000 + yearPart) : yearPart;
+            ageVal = 2026 - birthYear;
+          }
+        }
+      }
+    }
+  }
   var nameVal = colName !== -1 ? String(row[colName]).trim() : "";
   var lastNameVal = colLastName !== -1 ? String(row[colLastName]).trim() : "";
   var deptVal = colDept !== -1 ? String(row[colDept]).trim() : "";
@@ -148,6 +196,7 @@ function getEmployeeData(employeeId) {
   var riskVal = colRisk !== -1 ? String(row[colRisk]).trim() : "";
   var pregVal = colPreg !== -1 ? String(row[colPreg]).trim().toLowerCase() : "";
   var rightVal = colRight !== -1 ? String(row[colRight]).trim() : "";
+  var genderVal = colGender !== -1 ? String(row[colGender]).trim().toUpperCase() : "";
   
   var isPregnant = (pregVal === "yes" || pregVal === "y" || pregVal.indexOf("ตั้งครรภ์") !== -1 || pregVal === "จริง" || pregVal === "มี");
   var checkupRightVal = rightVal !== "" ? rightVal : "มีสิทธิ์";
@@ -160,7 +209,7 @@ function getEmployeeData(employeeId) {
     programGroup = "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป";
   }
   
-  return {
+  var result = {
     employeeId: idToFind,
     firstName: nameVal,
     lastName: lastNameVal,
@@ -168,11 +217,22 @@ function getEmployeeData(employeeId) {
     defaultLocation: locVal,
     programName: progVal,
     age: ageVal,
+    gender: genderVal,
     programGroup: programGroup,
     riskProgram: riskVal,
     isPregnant: isPregnant,
     checkupRight: checkupRightVal
   };
+
+  // Cache employee detail for 5 minutes (300 seconds)
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.put("emp_" + idToFind, JSON.stringify(result), 300);
+  } catch (e) {
+    console.warn("Cache write error in getEmployeeData: " + e.toString());
+  }
+  
+  return result;
 }
 
 /**
@@ -180,6 +240,17 @@ function getEmployeeData(employeeId) {
  * Uses getDisplayValues() to prevent auto date object conversion of dates columns.
  */
 function getConfigAndSlots() {
+  // Performance Optimization: Check script cache first to support 2,000 concurrent users
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get("config_and_slots");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.warn("Cache read error in getConfigAndSlots: " + e.toString());
+  }
+
   var ss = getSpreadsheet();
   
   var datesSheet = ss.getSheetByName("Config_Dates");
@@ -239,11 +310,21 @@ function getConfigAndSlots() {
     }
   }
   
-  return {
+  var result = {
     dates: dates,
     timeSlots: timeSlots,
     registrationCounts: registrationCounts
   };
+  
+  // Store in cache for 15 seconds (distributes load of 2000 users)
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.put("config_and_slots", JSON.stringify(result), 15);
+  } catch (e) {
+    console.warn("Cache write error in getConfigAndSlots: " + e.toString());
+  }
+  
+  return result;
 }
 
 /**
@@ -268,7 +349,7 @@ function saveRegistration(regData) {
       ]);
       regSheet.getRange("A1:M1").setFontWeight("bold").setBackground("#d9ead3");
     } else {
-      // Dynamic migration: check if 'โปรแกรมปัจจัยเสี่ยง' and 'ตั้งครรภ์' exist, if not, insert before Timestamp
+      // Dynamic migration: check if 'โปรแกรมปัจจัยเสี่ยง', 'ตั้งครรภ์', and 'การยินยอมใช้สิทธิ์ประกันสังคม' exist, if not, insert before Timestamp
       var rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
       
       var colRiskIdx = rHeaders.indexOf("โปรแกรมปัจจัยเสี่ยง");
@@ -278,7 +359,6 @@ function saveRegistration(regData) {
           regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
           regSheet.getRange(1, timeIdx + 1).setValue("โปรแกรมปัจจัยเสี่ยง");
           regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
-          // Refresh headers array for subsequent checks
           rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
         }
       }
@@ -289,6 +369,17 @@ function saveRegistration(regData) {
         if (timeIdx !== -1) {
           regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
           regSheet.getRange(1, timeIdx + 1).setValue("ตั้งครรภ์");
+          regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
+          rHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+        }
+      }
+      
+      var colSsoIdx = rHeaders.indexOf("การยินยอมใช้สิทธิ์ประกันสังคม");
+      if (colSsoIdx === -1) {
+        var timeIdx = rHeaders.indexOf("Timestamp");
+        if (timeIdx !== -1) {
+          regSheet.insertColumnBefore(timeIdx + 1); // 1-indexed
+          regSheet.getRange(1, timeIdx + 1).setValue("การยินยอมใช้สิทธิ์ประกันสังคม");
           regSheet.getRange(1, timeIdx + 1).setFontWeight("bold").setBackground("#d9ead3");
         }
       }
@@ -302,7 +393,7 @@ function saveRegistration(regData) {
     // Check if employee is eligible to register (is not blocked by HR)
     var empDetail = getEmployeeData(employeeId);
     if (empDetail && empDetail.checkupRight && empDetail.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
-      throw new Error("ขออภัย รหัสพนักงานนี้ไม่มีสิทธิ์ลงทะเบียนตรวจสุขภาพประจำปี (" + empDetail.checkupRight + ")");
+      throw new Error("ขออภัย ท่านยังไม่สามารถตรวจสุขภาพประจำปีนี้ได้ เนื่องจากเข้างานยังไม่ครบ 6 เดือน");
     }
     
     // Check if employee is already registered. Overwrite existing record if found.
@@ -350,27 +441,52 @@ function saveRegistration(regData) {
     }
     
     var timestampStr = Utilities.formatDate(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
-    var rowValues = [
-      "'" + employeeId, // Force text formatting
-      regData.firstName,
-      regData.lastName,
-      regData.department,
-      "'" + regData.phone, // Force text formatting
-      regData.shift,
-      regData.location,
-      regData.dateString,
-      regData.timeString,
-      regData.cancerTest || "",
-      regData.riskProgram || "",
-      regData.isPregnant ? "Yes" : "",
-      timestampStr
-    ];
+    
+    var finalHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+    var rowDataMap = {
+      "รหัสพนักงาน": "'" + employeeId,
+      "ชื่อ": regData.firstName,
+      "นามสกุล": regData.lastName,
+      "แผนก": regData.department,
+      "เบอร์โทรภายใน": "'" + regData.phone,
+      "กะทำงาน": regData.shift,
+      "สถานที่": regData.location,
+      "วันที่ตรวจ": regData.dateString,
+      "เวลาที่ตรวจ": regData.timeString,
+      "รายการตรวจมะเร็งที่เลือก": regData.cancerTest || "",
+      "โปรแกรมปัจจัยเสี่ยง": regData.riskProgram || "",
+      "ตั้งครรภ์": regData.isPregnant ? "Yes" : "",
+      "การยินยอมใช้สิทธิ์ประกันสังคม": regData.ssoConsent || "",
+      "Timestamp": timestampStr
+    };
+    
+    var rowValues = [];
+    for (var h = 0; h < finalHeaders.length; h++) {
+      var headerName = finalHeaders[h];
+      rowValues.push(rowDataMap[headerName] !== undefined ? rowDataMap[headerName] : "");
+    }
     
     if (existingRowIndex !== -1) {
       var range = regSheet.getRange(existingRowIndex, 1, 1, rowValues.length);
       range.setValues([rowValues]);
     } else {
       regSheet.appendRow(rowValues);
+    }
+    
+    // Write "ลงทะเบียนแล้ว" to Column G of the Name sheet
+    try {
+      updateNameRegistrationStatus(employeeId, "ลงทะเบียนแล้ว");
+    } catch (e) {
+      console.warn("Could not update name registration status:", e);
+    }
+    
+    // Clear cache to keep counts and employee details up to date under high concurrency (2000 users)
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.remove("config_and_slots");
+      cache.remove("emp_" + employeeId);
+    } catch (e) {
+      console.warn("Cache eviction error in saveRegistration: " + e.toString());
     }
     
     return { success: true, isNew: existingRowIndex === -1 };
@@ -419,6 +535,7 @@ function getRegistrationByEmpId(employeeId) {
   var colCancer = headers.indexOf("รายการตรวจมะเร็งที่เลือก");
   var colRisk = headers.indexOf("โปรแกรมปัจจัยเสี่ยง");
   var colPreg = headers.indexOf("ตั้งครรภ์");
+  var colSso = headers.indexOf("การยินยอมใช้สิทธิ์ประกันสังคม");
   var colTimeCreated = headers.indexOf("Timestamp");
   
   var empDetail = getEmployeeData(idToFind) || {};
@@ -429,6 +546,8 @@ function getRegistrationByEmpId(employeeId) {
     lastName: empDetail.lastName || String(row[2]).trim(),
     department: empDetail.department || String(row[3]).trim(),
     programGroup: empDetail.programGroup || "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป",
+    age: empDetail.age || 0,
+    gender: empDetail.gender || "",
     phone: colPhone !== -1 ? String(row[colPhone]).trim().replace(/^'/, '') : "",
     shift: colShift !== -1 ? String(row[colShift]).trim() : "",
     location: colLoc !== -1 ? String(row[colLoc]).trim() : "",
@@ -437,6 +556,7 @@ function getRegistrationByEmpId(employeeId) {
     cancerTest: colCancer !== -1 ? String(row[colCancer]).trim() : "",
     riskProgram: empDetail.riskProgram || (colRisk !== -1 ? String(row[colRisk]).trim() : ""),
     isPregnant: colPreg !== -1 ? String(row[colPreg]).trim() === "Yes" : false,
+    ssoConsent: colSso !== -1 ? String(row[colSso]).trim() : "",
     timestamp: colTimeCreated !== -1 ? (row[colTimeCreated] instanceof Date ? Utilities.formatDate(row[colTimeCreated], "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss") : String(row[colTimeCreated]).trim()) : ""
   };
 }
@@ -472,6 +592,23 @@ function deleteRegistration(employeeId) {
       }
       if (rawId === idToFind) {
         regSheet.deleteRow(i + 1); // 1-indexed, header is row 1
+        
+        // Clear "ลงทะเบียนแล้ว" in Column G of the Name sheet
+        try {
+          updateNameRegistrationStatus(idToFind, "");
+        } catch (e) {
+          console.warn("Could not clear name registration status:", e);
+        }
+        
+        // Clear caches under high concurrency (2000 users)
+        try {
+          var cache = CacheService.getScriptCache();
+          cache.remove("config_and_slots");
+          cache.remove("emp_" + idToFind);
+        } catch (e) {
+          console.warn("Cache eviction error in deleteRegistration: " + e.toString());
+        }
+        
         return { success: true };
       }
     }
@@ -585,9 +722,9 @@ function initializeSheets() {
     regSheet = ss.insertSheet("Registration");
     regSheet.appendRow([
       "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "เบอร์โทรภายใน", 
-      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "ตั้งครรภ์", "Timestamp"
+      "กะทำงาน", "สถานที่", "วันที่ตรวจ", "เวลาที่ตรวจ", "รายการตรวจมะเร็งที่เลือก", "โปรแกรมปัจจัยเสี่ยง", "ตั้งครรภ์", "การยินยอมใช้สิทธิ์ประกันสังคม", "Timestamp"
     ]);
-    regSheet.getRange("A1:M1").setFontWeight("bold").setBackground("#d9ead3");
+    regSheet.getRange("A1:N1").setFontWeight("bold").setBackground("#d9ead3");
   }
   
   return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', and 'Registration' sheets created/verified.";
@@ -619,9 +756,16 @@ function getAdminDashboardData() {
   if (nameSheet) {
     var headers = nameSheet.getRange(1, 1, 1, nameSheet.getLastColumn()).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
     var colId = headers.indexOf("รหัสพนักงาน");
+    if (colId === -1) colId = headers.indexOf("fempno");
+    
     var colName = headers.indexOf("ชื่อ");
+    if (colName === -1) colName = headers.indexOf("fempnamet");
+    
     var colLastName = headers.indexOf("นามสกุล");
+    if (colLastName === -1) colLastName = headers.indexOf("fsurnamet");
+    
     var colDept = headers.indexOf("แผนก");
+    if (colDept === -1) colDept = headers.indexOf("fdeptcode");
     
     var colRight = -1;
     for (var h = 0; h < headers.length; h++) {
@@ -683,5 +827,126 @@ function getAdminDashboardData() {
     employees: employees,
     registrations: registrations
   };
+}
+
+/**
+ * Update the 'ลงทะเบียน' column in the Name sheet for a specific employee
+ */
+function updateNameRegistrationStatus(employeeId, status) {
+  var ss = getSpreadsheet();
+  var nameSheet = ss.getSheetByName("Name");
+  if (!nameSheet) return;
+  
+  var idToFind = String(employeeId).trim();
+  if (/^\d+$/.test(idToFind)) {
+    idToFind = idToFind.padStart(6, '0');
+  }
+  
+  var data = nameSheet.getDataRange().getDisplayValues();
+  if (data.length <= 1) return;
+  
+  // Find headers and locate "ลงทะเบียน" (Column K, or index 10)
+  var headers = data[0].map(function(h) { return String(h).trim(); });
+  var colRegIdx = headers.indexOf("ลงทะเบียน");
+  
+  // If not found in headers, let's use Column G (column 7, index 6)
+  if (colRegIdx === -1) {
+    colRegIdx = 6; // 0-indexed index 6 is Column G
+    // If sheet has fewer than 7 columns, write header first
+    if (headers.length < 7) {
+      nameSheet.getRange(1, 7).setValue("ลงทะเบียน").setFontWeight("bold");
+    }
+  }
+  
+  // Find employee row
+  var colId = headers.indexOf("รหัสพนักงาน");
+  if (colId === -1) colId = 0; // fallback to column A
+  
+  for (var i = 1; i < data.length; i++) {
+    var rawId = String(data[i][colId]).trim().replace(/^'/, '');
+    if (/^\d+$/.test(rawId)) {
+      rawId = rawId.padStart(6, '0');
+    }
+    if (rawId === idToFind) {
+      nameSheet.getRange(i + 1, colRegIdx + 1).setValue(status);
+      try {
+        CacheService.getScriptCache().remove("emp_" + idToFind);
+      } catch (e) {
+        console.warn("Cache eviction error in updateNameRegistrationStatus: " + e.toString());
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Run this function once from the Apps Script editor to update the 'ลงทะเบียน' column 
+ * in the Name sheet for all employees who have already registered.
+ */
+function backfillRegistrationStatus() {
+  var ss = getSpreadsheet();
+  var nameSheet = ss.getSheetByName("Name");
+  var regSheet = ss.getSheetByName("Registration");
+  if (!nameSheet || !regSheet) {
+    return "Error: Name or Registration sheet not found.";
+  }
+  
+  var nameData = nameSheet.getDataRange().getDisplayValues();
+  var regData = regSheet.getDataRange().getDisplayValues();
+  
+  if (nameData.length <= 1) return "No employees in Name sheet.";
+  if (regData.length <= 1) return "No registrations in Registration sheet.";
+  
+  // Find "รหัสพนักงาน" and "ลงทะเบียน" columns in Name sheet
+  var nameHeaders = nameData[0].map(function(h) { return String(h).trim(); });
+  var colNameId = nameHeaders.indexOf("รหัสพนักงาน");
+  if (colNameId === -1) colNameId = nameHeaders.indexOf("fempno");
+  if (colNameId === -1) colNameId = 0;
+  
+  var colRegIdx = nameHeaders.indexOf("ลงทะเบียน");
+  if (colRegIdx === -1) {
+    colRegIdx = 6; // Column G
+    if (nameHeaders.length < 7) {
+      nameSheet.getRange(1, 7).setValue("ลงทะเบียน").setFontWeight("bold");
+    }
+  }
+  
+  // Get all registered IDs from Registration sheet
+  var regHeaders = regData[0].map(function(h) { return String(h).trim(); });
+  var colRegId = regHeaders.indexOf("รหัสพนักงาน");
+  if (colRegId === -1) colRegId = 0;
+  
+  var registeredIds = {};
+  for (var j = 1; j < regData.length; j++) {
+    var regId = String(regData[j][colRegId]).trim().replace(/^'/, '');
+    if (/^\d+$/.test(regId)) {
+      regId = regId.padStart(6, '0');
+    }
+    if (regId !== "") {
+      registeredIds[regId] = true;
+    }
+  }
+  
+  // Update Name sheet
+  var updatedCount = 0;
+  for (var i = 1; i < nameData.length; i++) {
+    var empId = String(nameData[i][colNameId]).trim().replace(/^'/, '');
+    if (/^\d+$/.test(empId)) {
+      empId = empId.padStart(6, '0');
+    }
+    
+    var isRegistered = registeredIds[empId] === true;
+    var currentStatus = colRegIdx < nameData[i].length ? String(nameData[i][colRegIdx]).trim() : "";
+    
+    if (isRegistered && currentStatus !== "ลงทะเบียนแล้ว") {
+      nameSheet.getRange(i + 1, colRegIdx + 1).setValue("ลงทะเบียนแล้ว");
+      updatedCount++;
+    } else if (!isRegistered && currentStatus === "ลงทะเบียนแล้ว") {
+      nameSheet.getRange(i + 1, colRegIdx + 1).setValue("");
+      updatedCount++;
+    }
+  }
+  
+  return "Success! Updated " + updatedCount + " employees.";
 }
 
