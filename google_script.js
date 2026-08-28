@@ -137,7 +137,26 @@ function getEmployeeData(employeeId) {
   if (colDept === -1) colDept = headers.indexOf("fdeptcode");
   
   var colLoc = headers.indexOf("สถานที่");
-  var colProg = headers.indexOf("โปรแกรมตรวจ");
+  
+  var colProg = -1;
+  // 1. Try exact matches first
+  colProg = headers.indexOf("โปรแกรมตรวจ");
+  if (colProg === -1) colProg = headers.indexOf("โปรแกรมตรวจสุขภาพ");
+  if (colProg === -1) colProg = headers.indexOf("โปรแกรม");
+  if (colProg === -1) colProg = headers.indexOf("Program");
+  
+  // 2. Fallback to substring containing 'โปรแกรม'/'program'/'prog' but excluding 'ปัจจัยเสี่ยง'/'risk'
+  if (colProg === -1) {
+    for (var h = 0; h < headers.length; h++) {
+      var headerLower = headers[h].toLowerCase();
+      if (headerLower.indexOf("ปัจจัยเสี่ยง") === -1 && headerLower.indexOf("risk") === -1) {
+        if (headerLower.indexOf("โปรแกรม") !== -1 || headerLower.indexOf("program") !== -1 || headerLower.indexOf("prog") !== -1) {
+          colProg = h;
+          break;
+        }
+      }
+    }
+  }
   
   var colAge = headers.indexOf("อายุ");
   if (colAge === -1) colAge = headers.indexOf("fbirth");
