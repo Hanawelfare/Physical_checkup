@@ -61,7 +61,7 @@
       <button class="tab-btn" id="tab-btn-special-catalog" onclick="switchTab('special-catalog')">
         <i class="fa-solid fa-notes-medical"></i> รายการตรวจพิเศษ (ชำระเอง)
       </button>
-      <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin')">
+      <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin')" style="display: none;">
         <i class="fa-solid fa-user-gear"></i> แผงควบคุมแอดมิน
       </button>
     </nav>
@@ -130,7 +130,7 @@
               <!-- Populated by JavaScript -->
             </div>
             <div class="sso-list-note" id="checkup-list-note" style="margin-top: 12px; font-size: 0.85rem; color: #0369a1; font-weight: 500; display: none; padding: 8px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
-              <i class="fa-solid fa-circle-info"></i> รายการเครื่องหมาย * รอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
+              <i class="fa-solid fa-circle-info"></i> * รายการสีน้ำเงินรอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
             </div>
             <div class="nhso-list-note" id="checkup-nhso-note" style="margin-top: 8px; font-size: 0.85rem; color: #be185d; font-weight: 500; display: none; padding: 8px 12px; background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 8px;">
               <i class="fa-solid fa-circle-info"></i> หมายเหตุเพิ่มเติม: ท่านสามารถนำบัตรประชาชนตัวจริงมารับชุดตรวจ HIV และ HPV ฟรี ณ จุดลงทะเบียน (เงื่อนไขตามที่ สปสช. กำหนด)
@@ -234,7 +234,7 @@
               </div>
               <div class="time-slots-info-box">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>หมายเหตุ:</strong> เฉพาะช่วงเวลา 06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
+                <span><strong>หมายเหตุ:</strong> พนักงานที่ตรวจโปรแกรมที่ 1 (อายุ 35 ปีขึ้นไป) หรือพนักงานที่ต้องการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจได้เวลา 06:00 - 08:00 น. และให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้</span>
               </div>
               
               <div class="time-slots-wrapper">
@@ -402,115 +402,14 @@
       
     </div>
 
-    <!-- TAB 3: SPECIAL SELF-PAY CATALOG -->
-    <div class="tab-content" id="tab-special-catalog">
-      <div class="catalog-header-card">
-        <h2><i class="fa-solid fa-notes-medical text-primary"></i> รายการตรวจสุขภาพพิเศษ (ชำระเงินเอง)</h2>
-        <p>พนักงานสามารถเลือกรับบริการตรวจเพิ่มเติมนอกเหนือจากสิทธิ์พื้นฐาน โดยชำระเงินเอง ณ วันที่ตรวจสุขภาพ</p>
-        
-        <!-- Welfare details block -->
-        <div class="welfare-banner">
-          <div class="welfare-banner-icon"><i class="fa-solid fa-gift"></i></div>
-          <div class="welfare-banner-text">
-            <h4>🎁 สวัสดิการช่วยเหลือค่าใช้จ่าย 50% สำหรับพนักงานอายุ 50 ปีขึ้นไป</h4>
-            <p>บริษัทสมทบค่าใช้จ่าย 50% ของราคาตรวจ (สูงสุดไม่เกินเกณฑ์ที่กำหนด) สำหรับรายการลำดับที่ 27-33 โปรดตรวจสอบเกณฑ์ระดับตำแหน่งและระยะเวลาสวัสดิการด้านล่าง</p>
-          </div>
+    <div class="tab-content" id="tab-special-catalog" style="text-align: center; padding: 1.5rem 0;">
+      <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center; width: 100%;">
+        <div class="catalog-infographic-container" style="max-width: 1000px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; background: #fff;">
+          <img src="special_catalog_infographic.jpg" alt="รายการตรวจสุขภาพพิเศษ (ชำระเงินเอง)" style="width: 100%; height: auto; display: block;">
         </div>
-      </div>
-
-      <!-- Comparison Welfare Table -->
-      <div class="welfare-table-container">
-        <h3><i class="fa-solid fa-list-check"></i> ตารางสวัสดิการสำหรับพนักงานอายุ 50 ปีขึ้นไป</h3>
-        <div class="table-responsive">
-          <table class="welfare-table">
-            <thead>
-              <tr>
-                <th>ประเภทการตรวจคัดกรอง</th>
-                <th>บริษัทช่วยเหลือ</th>
-                <th>วงเงินช่วยเหลือสูงสุด</th>
-                <th>ระดับของพนักงานที่ได้รับสิทธิ์</th>
-                <th>ความถี่สิทธิ์</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Mammogram</strong><br><span class="desc">ตรวจหาความผิดปกติของเต้านม (ผู้หญิง)</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">1,500 บาท</td>
-                <td>ทุกระดับ</td>
-                <td>ประจำปี</td>
-              </tr>
-              <tr>
-                <td><strong>Thin Prep</strong><br><span class="desc">ตรวจคัดกรองมะเร็งปากมดลูก (ผู้หญิง)</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">1,500 บาท</td>
-                <td>ทุกระดับ</td>
-                <td>ประจำปี</td>
-              </tr>
-              <tr>
-                <td><strong>Prostate Screening</strong><br><span class="desc">ตรวจมะเร็งต่อมลูกหมากโดยแพทย์ (ผู้ชาย)</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">1,000 บาท</td>
-                <td>ทุกระดับ</td>
-                <td>ประจำปี</td>
-              </tr>
-              <tr>
-                <td><strong>CT Calcium Score</strong><br><span class="desc">ตรวจแคลเซียมที่ผนังหลอดเลือดหัวใจ</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">2,000 บาท</td>
-                <td>ระดับ M4/T5 ขึ้นไป</td>
-                <td>ทุก 5 ปี</td>
-              </tr>
-              <tr>
-                <td><strong>Colonoscopy</strong><br><span class="desc">การส่องกล้องตรวจลำไส้ใหญ่ (รวมตรวจตัดชิ้นเนื้อ)</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">15,000 บาท</td>
-                <td>ระดับ M5/T6 ขึ้นไป</td>
-                <td>ทุก 5 ปี</td>
-              </tr>
-              <tr>
-                <td><strong>MRI Brain (MRI & MRA)</strong><br><span class="desc">ตรวจสมองด้วยคลื่นแม่เหล็กไฟฟ้า</span></td>
-                <td>50% ของราคา</td>
-                <td class="text-green">10,000 บาท</td>
-                <td>ระดับ M5/T6 ขึ้นไป</td>
-                <td>1 ครั้ง ตลอดอายุงาน</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="catalog-infographic-container" style="max-width: 1000px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; background: #fff;">
+          <img src="special_welfare_table.png" alt="ตารางสวัสดิการสำหรับพนักงานอายุ 50 ปีขึ้นไป" style="width: 100%; height: auto; display: block;">
         </div>
-        <p class="welfare-footnote">** ยื่นแบบฟอร์มขอเบิกค่ารักษาพยาบาล ใบเสร็จ ใบรับรองแพทย์ตัวจริง พร้อมผลตรวจเสนอหัวหน้างานอนุมัติ</p>
-      </div>
-
-      <!-- Catalog Notice Alert Banner -->
-      <div class="catalog-notice-banner">
-        <div class="catalog-notice-banner-icon">
-          <i class="fa-solid fa-circle-exclamation"></i>
-        </div>
-        <div class="catalog-notice-banner-text">
-          <h4>⚠️ ข้อแนะนำและหมายเหตุสำคัญ (โปรดอ่านก่อนเลือกดู)</h4>
-          <p style="margin-bottom: 6px;">1. <strong>สำหรับศึกษาข้อมูลและราคาเท่านั้น:</strong> หน้ารายการนี้มีไว้เพื่อให้พนักงานดูรายการตรวจพิเศษและเช็กราคาล่วงหน้าเท่านั้น <u>ไม่ใช่ระบบการสั่งซื้อหรือกดจองออนไลน์</u></p>
-          <p>2. <strong>การแจ้งรับบริการ:</strong> รายการตรวจพิเศษเหล่านี้จะรวมอยู่ในเอกสารใบนัดตรวจสุขภาพของท่านอยู่แล้ว ท่านสามารถแจ้งความประสงค์เลือกตรวจเพิ่มเติมและชำระเงินกับเจ้าหน้าที่โรงพยาบาล ณ จุดลงทะเบียนในวันตรวจสุขภาพจริงได้โดยตรงค่ะ</p>
-        </div>
-      </div>
-
-      <!-- Filters & Search -->
-      <div class="catalog-filter-bar">
-        <div class="catalog-search-wrapper">
-          <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input type="text" id="catalog-search-input" placeholder="พิมพ์ชื่อรายการตรวจเพื่อค้นหา... เช่น มะเร็ง, ตับ, ไขมัน" oninput="filterCatalog()">
-        </div>
-        <div class="catalog-filter-pills" id="catalog-filter-pills">
-          <button class="filter-pill active" onclick="setCatalogCategory('all')">ทั้งหมด</button>
-          <button class="filter-pill" onclick="setCatalogCategory('blood')">🧪 ตรวจเลือด/ปัสสาวะ</button>
-          <button class="filter-pill" onclick="setCatalogCategory('cancer')">🎗️ ตรวจมะเร็ง</button>
-          <button class="filter-pill" onclick="setCatalogCategory('scan')">🩻 สแกน/เฉพาะทาง</button>
-          <button class="filter-pill" onclick="setCatalogCategory('welfare')">🌟 มีสวัสดิการสมทบ</button>
-        </div>
-      </div>
-
-      <!-- Catalog Card Grid -->
-      <div class="catalog-grid" id="catalog-cards-grid">
-        <!-- Rendered by JS -->
       </div>
     </div>
 
@@ -636,9 +535,12 @@
                 <!-- Populated dynamically -->
               </select>
             </div>
-            <div class="actions-group">
+            <div class="actions-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
               <button type="button" class="btn-copy-bulk" onclick="copyReminderBulk()">
                 <i class="fa-solid fa-copy"></i> ก๊อบปี้ข้อความเตือนของแผนกที่เลือก
+              </button>
+              <button type="button" class="btn-auto-allocate" id="btn-admin-auto-allocate" onclick="triggerAutoAllocation()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> จัดรอบตรวจอัตโนมัติ (ยกเว้น ลาออก/คลอด/ป่วย/เกาะกง)
               </button>
             </div>
           </div>
