@@ -56,11 +56,13 @@ function doPost(e) {
     } else if (action === "getRegistrationByEmpId") {
       result = getRegistrationByEmpId(args[0]);
     } else if (action === "deleteRegistration") {
-      result = deleteRegistration(args[0]);
+      result = deleteRegistration(args[0], args[1]);
     } else if (action === "initializeSheets") {
       result = initializeSheets();
     } else if (action === "getAdminDashboardData") {
       result = getAdminDashboardData();
+    } else if (action === "autoAllocateRemainingEmployees") {
+      result = autoAllocateRemainingEmployees();
     } else {
       throw new Error("Action not found: " + action);
     }
@@ -651,7 +653,7 @@ function getRegistrationByEmpId(employeeId) {
 /**
  * Delete a user registration. Lock applied.
  */
-function deleteRegistration(employeeId) {
+function deleteRegistration(employeeId, reason) {
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
@@ -672,33 +674,85 @@ function deleteRegistration(employeeId) {
     var data = regSheet.getDataRange().getDisplayValues();
     if (data.length <= 1) return { success: false, error: "No registrations found" };
     
+    var foundRowIdx = -1;
+    var rowData = null;
     for (var i = 1; i < data.length; i++) {
       var rawId = String(data[i][0]).trim().replace(/^'/, '');
       if (/^\d+$/.test(rawId)) {
         rawId = rawId.padStart(6, '0');
       }
       if (rawId === idToFind) {
-        regSheet.deleteRow(i + 1); // 1-indexed, header is row 1
-        
-        // Clear "ลงทะเบียนแล้ว" in Column G of the Name sheet
-        try {
-          updateNameRegistrationStatus(idToFind, "");
-        } catch (e) {
-          console.warn("Could not clear name registration status:", e);
-        }
-        
-        // Clear caches under high concurrency (2000 users)
-        try {
-          var cache = CacheService.getScriptCache();
-          cache.remove("config_and_slots");
-          cache.remove("emp_" + idToFind);
-          cache.remove("reg_" + idToFind);
-        } catch (e) {
-          console.warn("Cache eviction error in deleteRegistration: " + e.toString());
-        }
-        
-        return { success: true };
+        foundRowIdx = i + 1;
+        rowData = data[i];
+        break;
       }
+    }
+    
+    if (foundRowIdx !== -1) {
+      // 1. Log cancellation details to "Cancel_Log" sheet
+      try {
+        var cancelSheet = ss.getSheetByName("Cancel_Log");
+        if (!cancelSheet) {
+          cancelSheet = ss.insertSheet("Cancel_Log");
+          cancelSheet.appendRow([
+            "รหัสพนักงาน", "ชื่อ", "นามสกุล", "แผนก", "สถานที่", "วันที่จองเดิม", "เวลาที่จองเดิม", "เหตุผลในการยกเลิก", "Timestamp"
+          ]);
+          cancelSheet.getRange("A1:I1").setFontWeight("bold").setBackground("#f4c7c3"); // light red header
+        }
+        
+        var regHeaders = data[0].map(function(h) { return String(h).trim(); });
+        var colName = regHeaders.indexOf("ชื่อ");
+        var colLastName = regHeaders.indexOf("นามสกุล");
+        var colDept = regHeaders.indexOf("แผนก");
+        var colLoc = regHeaders.indexOf("สถานที่");
+        var colDate = regHeaders.indexOf("วันที่ตรวจ");
+        var colTime = regHeaders.indexOf("เวลาที่ตรวจ");
+        
+        var nameVal = colName !== -1 ? rowData[colName] : "";
+        var lastNameVal = colLastName !== -1 ? rowData[colLastName] : "";
+        var deptVal = colDept !== -1 ? rowData[colDept] : "";
+        var locVal = colLoc !== -1 ? rowData[colLoc] : "";
+        var dateVal = colDate !== -1 ? rowData[colDate] : "";
+        var timeVal = colTime !== -1 ? rowData[colTime] : "";
+        
+        var cancelTimestamp = Utilities.formatDate(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
+        
+        cancelSheet.appendRow([
+          "'" + idToFind,
+          nameVal,
+          lastNameVal,
+          deptVal,
+          locVal,
+          dateVal,
+          timeVal,
+          reason || "ไม่ได้ระบุ",
+          cancelTimestamp
+        ]);
+      } catch (logErr) {
+        console.warn("Could not log cancellation details:", logErr);
+      }
+      
+      // 2. Delete the row
+      regSheet.deleteRow(foundRowIdx);
+      
+      // Clear "ลงทะเบียนแล้ว" in Column G of the Name sheet
+      try {
+        updateNameRegistrationStatus(idToFind, "");
+      } catch (e) {
+        console.warn("Could not clear name registration status:", e);
+      }
+      
+      // Clear caches under high concurrency (2000 users)
+      try {
+        var cache = CacheService.getScriptCache();
+        cache.remove("config_and_slots");
+        cache.remove("emp_" + idToFind);
+        cache.remove("reg_" + idToFind);
+      } catch (e) {
+        console.warn("Cache eviction error in deleteRegistration: " + e.toString());
+      }
+      
+      return { success: true };
     }
     return { success: false, error: "Registration record not found" };
   } finally {
@@ -1036,5 +1090,264 @@ function backfillRegistrationStatus() {
   }
   
   return "Success! Updated " + updatedCount + " employees.";
+}
+
+/**
+ * Auto-assigns available dates and time slots to all eligible unregistered employees.
+ * Skips employees whose Remark (หมายเหตุ) column contains "ลาออก", "ลาคลอด", "ลาป่วย", or "อยู่เกาะกง".
+ */
+function autoAllocateRemainingEmployees() {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000); // 30 seconds wait
+  } catch (e) {
+    throw new Error("ระบบหนาแน่นชั่วคราว กรุณาลองใหม่อีกครั้ง (Lock timeout)");
+  }
+  
+  try {
+    var ss = getSpreadsheet();
+    var nameSheet = ss.getSheetByName("Name");
+    var regSheet = ss.getSheetByName("Registration");
+    
+    if (!nameSheet || !regSheet) {
+      throw new Error("ไม่พบชีตฐานข้อมูล Name หรือ Registration");
+    }
+    
+    var nameData = nameSheet.getDataRange().getDisplayValues();
+    var nameHeaders = nameData[0].map(function(h) { return String(h).trim(); });
+    
+    var colEmpId = nameHeaders.indexOf("รหัสพนักงาน");
+    if (colEmpId === -1) colEmpId = nameHeaders.indexOf("fempno");
+    
+    var colName = nameHeaders.indexOf("ชื่อ");
+    if (colName === -1) colName = nameHeaders.indexOf("fempnamet");
+    
+    var colLastName = nameHeaders.indexOf("นามสกุล");
+    if (colLastName === -1) colLastName = nameHeaders.indexOf("fsurnamet");
+    
+    var colDept = nameHeaders.indexOf("แผนก");
+    if (colDept === -1) colDept = nameHeaders.indexOf("fdeptcode");
+    
+    var colLoc = nameHeaders.indexOf("สถานที่");
+    var colProg = nameHeaders.indexOf("โปรแกรมตรวจ");
+    if (colProg === -1) colProg = nameHeaders.indexOf("โปรแกรมตรวจสุขภาพ");
+    if (colProg === -1) colProg = nameHeaders.indexOf("โปรแกรม");
+    
+    var colRight = -1;
+    for (var h = 0; h < nameHeaders.length; h++) {
+      if (nameHeaders[h].indexOf("สิทธิ์") !== -1) {
+        colRight = h;
+        break;
+      }
+    }
+    
+    var colRemark = -1;
+    for (var h = 0; h < nameHeaders.length; h++) {
+      if (nameHeaders[h].indexOf("หมายเหตุ") !== -1 || nameHeaders[h].toLowerCase().indexOf("remark") !== -1) {
+        colRemark = h;
+        break;
+      }
+    }
+    
+    var colStatus = nameHeaders.indexOf("สถานะการลงทะเบียน");
+    if (colStatus === -1) colStatus = nameHeaders.indexOf("สถานะ");
+    if (colStatus === -1) {
+      // Create status column if not exist
+      nameSheet.insertColumnAfter(nameHeaders.length);
+      nameSheet.getRange(1, nameHeaders.length + 1).setValue("สถานะการลงทะเบียน").setFontWeight("bold").setBackground("#c9daf8");
+      nameData = nameSheet.getDataRange().getDisplayValues();
+      nameHeaders = nameData[0].map(function(h) { return String(h).trim(); });
+      colStatus = nameHeaders.indexOf("สถานะการลงทะเบียน");
+    }
+    
+    // Find if Name sheet has a shift column (just in case they have it)
+    var colShiftName = -1;
+    for (var h = 0; h < nameHeaders.length; h++) {
+      var hL = nameHeaders[h].toLowerCase();
+      if (hL.indexOf("กะ") !== -1 || hL.indexOf("ทีม") !== -1 || hL.indexOf("shift") !== -1) {
+        if (hL.indexOf("ปัจจัยเสี่ยง") === -1) {
+          colShiftName = h;
+          break;
+        }
+      }
+    }
+    
+    // Get all currently registered IDs to exclude
+    var regData = regSheet.getDataRange().getDisplayValues();
+    var regHeaders = regData[0].map(function(h) { return String(h).trim(); });
+    var colRegId = regHeaders.indexOf("รหัสพนักงาน");
+    
+    var registeredIds = {};
+    for (var i = 1; i < regData.length; i++) {
+      var rId = String(regData[i][colRegId]).trim().replace(/^'/, '');
+      if (/^\d+$/.test(rId)) rId = rId.padStart(6, '0');
+      registeredIds[rId] = true;
+    }
+    
+    // Get config dates and times
+    var configAndSlots = getConfigAndSlots();
+    var dates = configAndSlots.dates;
+    var timeSlots = configAndSlots.timeSlots;
+    var registrationCounts = configAndSlots.registrationCounts || {};
+    
+    var successCount = 0;
+    var skipCount = 0;
+    var noSlotCount = 0;
+    
+    // Process unregistered employees
+    for (var i = 1; i < nameData.length; i++) {
+      var empId = String(nameData[i][colEmpId]).trim().replace(/^'/, '');
+      if (/^\d+$/.test(empId)) empId = empId.padStart(6, '0');
+      if (empId === "") continue;
+      
+      // Skip if already registered
+      if (registeredIds[empId]) continue;
+      
+      // Skip if ineligible
+      var rightVal = colRight !== -1 ? String(nameData[i][colRight]).trim() : "";
+      if (rightVal.indexOf("ไม่มีสิทธิ์") !== -1) continue;
+      
+      // Skip if Remark matches leave / resigned / Koh Kong
+      if (colRemark !== -1) {
+        var remarkVal = String(nameData[i][colRemark]).trim();
+        if (remarkVal.indexOf("ลาออก") !== -1 || 
+            remarkVal.indexOf("ลาคลอด") !== -1 || 
+            remarkVal.indexOf("ลาป่วย") !== -1 || 
+            remarkVal.indexOf("อยู่เกาะกง") !== -1) {
+          skipCount++;
+          continue;
+        }
+      }
+      
+      var firstName = colName !== -1 ? String(nameData[i][colName]).trim() : "";
+      var lastName = colLastName !== -1 ? String(nameData[i][colLastName]).trim() : "";
+      var department = colDept !== -1 ? String(nameData[i][colDept]).trim() : "";
+      var location = colLoc !== -1 ? String(nameData[i][colLoc]).trim() : "";
+      
+      // Determine employee shift
+      var employeeShift = "คร่อมกะ"; // Default fallback
+      if (colShiftName !== -1) {
+        var parsedShift = String(nameData[i][colShiftName]).trim();
+        if (parsedShift === "ทีม A" || parsedShift === "ทีม B" || parsedShift === "เช้าตลอด" || parsedShift === "คร่อมกะ") {
+          employeeShift = parsedShift;
+        }
+      }
+      
+      // Find matching available slot
+      var matchedSlot = null;
+      
+      for (var d = 0; d < dates.length; d++) {
+        var dateObj = dates[d];
+        if (dateObj.location !== location) continue;
+        
+        // Check if date matches employee shift rules
+        var shiftMatches = false;
+        if (employeeShift === "ทีม A") {
+          shiftMatches = (dateObj.team === "ทีม A");
+        } else if (employeeShift === "ทีม B") {
+          shiftMatches = (dateObj.team === "ทีม B");
+        } else if (employeeShift === "เช้าตลอด" || employeeShift === "คร่อมกะ") {
+          shiftMatches = (dateObj.team === "ทีม A" || dateObj.team === "ทีม B");
+        }
+        
+        if (!shiftMatches) continue;
+        
+        // Look for an open time slot on this date
+        for (var t = 0; t < timeSlots.length; t++) {
+          var timeObj = timeSlots[t];
+          
+          // Exclude slots >= 14:00 on 1st and 5th of October
+          var isFirstOrFifth = dateObj.dateString.indexOf("1 ตุลาคม") !== -1 || dateObj.dateString.indexOf("5 ตุลาคม") !== -1;
+          if (isFirstOrFifth) {
+            var match = timeObj.slotTime.match(/^(\d{2})[.:](\d{2})/);
+            if (match) {
+              var hour = parseInt(match[1], 10);
+              var minute = parseInt(match[2], 10);
+              var timeVal = hour * 60 + minute;
+              if (timeVal >= 840) { // 14:00 is 840 minutes
+                continue; // Skip this slot
+              }
+            }
+          }
+          
+          var key = location + "_" + dateObj.dateString + "_" + timeObj.slotTime;
+          var currentRegs = registrationCounts[key] || 0;
+          
+          if (currentRegs < timeObj.limit) {
+            matchedSlot = {
+              location: location,
+              dateString: dateObj.dateString,
+              timeString: timeObj.slotTime,
+              key: key
+            };
+            break;
+          }
+        }
+        
+        if (matchedSlot) break;
+      }
+      
+      if (matchedSlot) {
+        // Increment slot booking count
+        registrationCounts[matchedSlot.key] = (registrationCounts[matchedSlot.key] || 0) + 1;
+        
+        // Write to Registration Sheet
+        var timestampStr = Utilities.formatDate(new Date(), "Asia/Bangkok", "yyyy-MM-dd HH:mm:ss");
+        var finalHeaders = regSheet.getDataRange().getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+        
+        var rowDataMap = {
+          "รหัสพนักงาน": "'" + empId,
+          "ชื่อ": firstName,
+          "นามสกุล": lastName,
+          "แผนก": department,
+          "เบอร์โทรภายใน": "Auto",
+          "กะทำงาน": employeeShift,
+          "สถานที่": matchedSlot.location,
+          "วันที่ตรวจ": matchedSlot.dateString,
+          "เวลาที่ตรวจ": matchedSlot.timeString,
+          "Timestamp": timestampStr
+        };
+        
+        var rowValues = [];
+        for (var h = 0; h < finalHeaders.length; h++) {
+          var headerName = finalHeaders[h];
+          rowValues.push(rowDataMap[headerName] !== undefined ? rowDataMap[headerName] : "");
+        }
+        
+        regSheet.appendRow(rowValues);
+        
+        // Update Name sheet status
+        nameSheet.getRange(i + 1, colStatus + 1).setValue("ลงทะเบียนแล้ว");
+        successCount++;
+      } else {
+        noSlotCount++;
+      }
+    }
+    
+    // Evict all caches
+    try {
+      var cache = CacheService.getScriptCache();
+      cache.remove("config_and_slots");
+      // Clean employee caches
+      for (var i = 1; i < nameData.length; i++) {
+        var empId = String(nameData[i][colEmpId]).trim().replace(/^'/, '');
+        if (/^\d+$/.test(empId)) empId = empId.padStart(6, '0');
+        cache.remove("emp_" + empId);
+        cache.remove("reg_" + empId);
+      }
+    } catch (e) {
+      console.warn("Cache eviction error: " + e.toString());
+    }
+    
+    return {
+      success: true,
+      successCount: successCount,
+      skipCount: skipCount,
+      noSlotCount: noSlotCount
+    };
+    
+  } finally {
+    lock.releaseLock();
+  }
 }
 
