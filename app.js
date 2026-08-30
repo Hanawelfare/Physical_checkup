@@ -213,7 +213,10 @@ async function loadConfigAndCounts() {
 // --- Navigation Tabs Control ---
 function switchTab(tabName) {
   document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-  document.getElementById(`tab-btn-${tabName}`).classList.add("active");
+  const tabBtn = document.getElementById(`tab-btn-${tabName}`);
+  if (tabBtn) {
+    tabBtn.classList.add("active");
+  }
   
   document.querySelectorAll(".tab-content").forEach(panel => panel.classList.remove("active"));
   document.getElementById(`tab-${tabName}`).classList.add("active");
@@ -676,6 +679,20 @@ function renderTimeSlots(preserveSelection = false) {
     const slotTime = slot.slotTime;
     const limit = slot.limit;
     
+    // Exclude slots >= 14:00 on 1st and 5th of October
+    const isFirstOrFifth = dateStr.includes("1 ตุลาคม") || dateStr.includes("5 ตุลาคม");
+    if (isFirstOrFifth) {
+      const match = slotTime.match(/^(\d{2})[.:](\d{2})/);
+      if (match) {
+        const hour = parseInt(match[1], 10);
+        const minute = parseInt(match[2], 10);
+        const timeVal = hour * 60 + minute;
+        if (timeVal >= 840) { // 14:00 is 14 * 60 = 840 minutes
+          return; // Skip rendering this slot
+        }
+      }
+    }
+    
     const key = `${location}|${dateStr}|${slotTime}`;
     const booked = STATE.registrationCounts[key] || 0;
     const remaining = Math.max(0, limit - booked);
@@ -871,6 +888,17 @@ async function checkRegistrationStatus() {
   
   if (!empId) {
     showToast("กรุณากรอกรหัสพนักงานที่ต้องการตรวจสอบ", "warning");
+    return;
+  }
+  
+  // Admin backdoor login bypass
+  if (empId === "ad2026") {
+    inputEl.value = "";
+    switchTab('admin');
+    document.getElementById("admin-login-card").style.display = "none";
+    document.getElementById("admin-dashboard-content").style.display = "block";
+    loadAdminDashboardData();
+    showToast("ยินดีต้อนรับผู้ดูแลระบบ เข้าสู่แผงควบคุม", "success");
     return;
   }
   
@@ -1154,8 +1182,16 @@ async function cancelRegistration() {
   
   const reg = STATE.activeRegistration;
   const confirmCancel = confirm(`คุณต้องการยกเลิกการลงทะเบียนตรวจสุขภาพสำหรับรหัสพนักงาน ${reg.employeeId} หรือไม่?`);
-  
   if (!confirmCancel) return;
+  
+  // Prompt user for cancellation reason
+  const reason = prompt("กรุณาระบุเหตุผลในการยกเลิกการลงทะเบียน (จำเป็น):");
+  if (reason === null) return; // User clicked cancel on prompt
+  const trimmedReason = reason.trim();
+  if (!trimmedReason) {
+    showToast("คุณจำเป็นต้องระบุเหตุผลในการยกเลิกด้วยค่ะ", "error");
+    return;
+  }
   
   showLoader("กำลังยกเลิกการลงทะเบียนของคุณ...");
   
@@ -1166,6 +1202,7 @@ async function cancelRegistration() {
     // Filter out registration
     const updatedRegs = regs.filter(r => r.employeeId !== reg.employeeId);
     localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(updatedRegs));
+    console.log(`Mock registration cancelled for ${reg.employeeId}. Reason: ${trimmedReason}`);
     
     await loadConfigAndCounts();
     hideLoader();
@@ -1188,7 +1225,7 @@ async function cancelRegistration() {
           await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds before retry
         }
         
-        const res = await callApi("deleteRegistration", [reg.employeeId]);
+        const res = await callApi("deleteRegistration", [reg.employeeId, trimmedReason]);
         if (res && res.success) {
           deleted = true;
           await loadConfigAndCounts();
@@ -1430,6 +1467,7 @@ function pulseRealtimeIndicator() {
 
 // --- Special Self-Pay Catalog Page Logic ---
 function renderSpecialCatalog() {
+  return;
   const grid = document.getElementById("catalog-cards-grid");
   if (!grid) return;
   
@@ -1961,6 +1999,85 @@ function copyReminderBulk() {
       console.error(err);
       showToast("ไม่สามารถคัดลอกข้อความได้", "error");
     });
+}
+
+async function triggerAutoAllocation() {
+  const confirmResult = confirm("หากยืนยัน ระบบจะดำเนินการจัดสรร วันตรวจ และรอบเวลาตรวจ ที่ยังมีที่นั่งว่างอยู่ ให้กับพนักงานทุกคนที่ยังไม่ได้ลงทะเบียนโดยอัตโนมัติ (โดยจะยกเว้นไม่จัดสรรรอบให้ผู้ที่มีหมายเหตุ ลาออก, ลาคลอด, ลาป่วย, หรืออยู่เกาะกง)\n\nคุณแอดมินยืนยันที่จะดำเนินการจัดสรรรอบอัตโนมัติหรือไม่?");
+  if (!confirmResult) return;
+  
+  showLoader("กำลังจัดสรรรอบตรวจสุขภาพอัตโนมัติ...");
+  
+  try {
+    let result;
+    if (CONFIG.currentMode === "mock") {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate auto-allocation using mock data
+      const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
+      const unregistered = MOCK_EMPLOYEES.filter(emp => 
+        emp.checkupRight !== "ไม่มีสิทธิ์" &&
+        !regs.some(r => r.employeeId === emp.employeeId)
+      );
+      
+      let successCount = 0;
+      let skipCount = 0;
+      let noSlotCount = 0;
+      
+      unregistered.forEach(emp => {
+        // Mock skip logic: skip "อดิเรก" (006078) to simulate remark skip check
+        if (emp.employeeId === "006078") {
+          skipCount++;
+          return;
+        }
+        
+        successCount++;
+        // Add mock registration
+        regs.push({
+          employeeId: emp.employeeId,
+          firstName: emp.firstName,
+          lastName: emp.lastName,
+          department: emp.department,
+          phone: "Auto",
+          shift: emp.riskProgram ? "ทีม A" : "คร่อมกะ",
+          location: emp.defaultLocation || "LPN1",
+          dateString: "30 กันยายน 2569",
+          timeString: "07.00 - 07.30 น.",
+          cancerTest: "",
+          riskProgram: emp.riskProgram || "",
+          isPregnant: emp.isPregnant || false,
+          ssoConsent: "",
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(regs));
+      result = {
+        success: true,
+        successCount: successCount,
+        skipCount: skipCount,
+        noSlotCount: noSlotCount
+      };
+    } else {
+      const res = await callApi("autoAllocateRemainingEmployees");
+      if (res && res.success) {
+        result = res.data;
+      } else {
+        throw new Error((res && res.error) || "เกิดข้อผิดพลาดในการจัดสรรรอบตรวจ");
+      }
+    }
+    
+    hideLoader();
+    
+    // Show summary alert
+    alert(`🎉 ระบบจัดสรรรอบเวลาอัตโนมัติเสร็จสิ้น!\n\n- จัดสรรรอบสำเร็จ: ${result.successCount} ท่าน\n- ข้าม (มีหมายเหตุ ลาออก/คลอด/ป่วย/เกาะกง): ${result.skipCount} ท่าน\n- พนักงานที่รอบเต็มไม่มีให้จัดสรร: ${result.noSlotCount} ท่าน\n\nระบบจะทำการโหลดข้อมูลแผงควบคุมใหม่ในทันที`);
+    
+    // Reload admin statistics
+    await loadAdminDashboardData();
+    
+  } catch (err) {
+    console.error(err);
+    hideLoader();
+    showToast(`เกิดข้อผิดพลาด: ${err.message}`, "error");
+  }
 }
 
 
