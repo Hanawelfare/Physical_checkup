@@ -2629,4 +2629,31 @@ select:disabled {
   color: #db2777 !important;
 }
 
+/* --- Admin Auto-Allocation Button --- */
+.btn-auto-allocate {
+  background: #f59e0b; /* amber warning color */
+  color: #1e293b; /* dark slate text */
+  font-weight: 700;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);
+  font-family: inherit;
+}
+
+.btn-auto-allocate:hover {
+  background: #d97706; /* darker amber */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.25);
+}
+
+.btn-auto-allocate:active {
+  transform: translateY(0);
+}
+
 
