@@ -21,7 +21,8 @@ const STATE = {
   catalogSearchQuery: "",
   isAdminAuthenticated: false,
   adminSubTab: "slots",
-  adminDashboardData: null
+  adminDashboardData: null,
+  allowCancellation: false
 };
 
 // --- Special Self-Pay Test Catalog Data ---
@@ -143,6 +144,11 @@ if (!localStorage.getItem("MOCK_REGISTRATIONS")) {
   localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(initialRegs));
 }
 
+// Initialize Allow Cancellation setting in LocalStorage
+if (localStorage.getItem("ALLOW_CANCELLATION") === null) {
+  localStorage.setItem("ALLOW_CANCELLATION", "false");
+}
+
 // --- Initialize App ---
 document.addEventListener("DOMContentLoaded", () => {
   setupModeSelector();
@@ -181,6 +187,7 @@ async function loadConfigAndCounts() {
   if (CONFIG.currentMode === "mock") {
     STATE.configDates = MOCK_CONFIG_DATES;
     STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
+    STATE.allowCancellation = localStorage.getItem("ALLOW_CANCELLATION") === "true";
     
     const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
     STATE.registrationCounts = {};
@@ -196,6 +203,7 @@ async function loadConfigAndCounts() {
         STATE.configDates = response.data.dates;
         STATE.configTimeSlots = response.data.timeSlots;
         STATE.registrationCounts = response.data.registrationCounts;
+        STATE.allowCancellation = !!response.data.allowCancellation;
       } else {
         throw new Error(response.error || "ดึงข้อมูลล้มเหลว");
       }
@@ -204,6 +212,7 @@ async function loadConfigAndCounts() {
       showToast("ไม่สามารถเชื่อมต่อ Google Sheets API ได้ จะใช้ข้อมูลจำลองแทนชั่วคราว", "warning");
       STATE.configDates = MOCK_CONFIG_DATES;
       STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
+      STATE.allowCancellation = false;
     } finally {
       hideLoader();
     }
@@ -1113,6 +1122,12 @@ function renderStatusCard(reg, searchId) {
     cardSsoSection.style.display = "none";
   }
   
+  // Hide or show cancel button based on global configuration
+  const cancelBtn = cardContainer.querySelector(".btn-card-cancel");
+  if (cancelBtn) {
+    cancelBtn.style.display = STATE.allowCancellation ? "inline-flex" : "none";
+  }
+  
   cardContainer.classList.add("visible");
   cardContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
@@ -1178,6 +1193,10 @@ function editRegistration() {
 
 // --- Cancel Booking Action ---
 async function cancelRegistration() {
+  if (!STATE.allowCancellation) {
+    showToast("ระบบยังไม่เปิดให้พนักงานยกเลิกการลงทะเบียนตรวจสุขภาพด้วยตนเองในขณะนี้ค่ะ", "warning");
+    return;
+  }
   if (!STATE.activeRegistration) return;
   
   const reg = STATE.activeRegistration;
@@ -1440,6 +1459,7 @@ async function performBackgroundSync() {
       STATE.configDates = response.data.dates;
       STATE.configTimeSlots = response.data.timeSlots;
       STATE.registrationCounts = response.data.registrationCounts;
+      STATE.allowCancellation = !!response.data.allowCancellation;
       // Trigger in-place update of slots grid
       renderTimeSlots(true);
       pulseRealtimeIndicator();
@@ -1766,10 +1786,12 @@ async function loadAdminDashboardData() {
         employees: eligibleEmployees,
         registrations: registrations
       };
+      STATE.allowCancellation = localStorage.getItem("ALLOW_CANCELLATION") === "true";
     } else {
       const res = await callApi("getAdminDashboardData", []);
       if (res && res.success) {
         STATE.adminDashboardData = res.data;
+        STATE.allowCancellation = !!res.data.allowCancellation;
       } else {
         throw new Error(res.error || "ไม่สามารถดึงข้อมูลแดชบอร์ดได้");
       }
@@ -1798,6 +1820,12 @@ function renderAdminDashboard() {
   document.getElementById("stat-registered-emp").textContent = registeredCount;
   document.getElementById("stat-unregistered-emp").textContent = unregisteredCount;
   document.getElementById("stat-percent-emp").textContent = `${percentage}%`;
+  
+  // Set the checkbox state
+  const checkbox = document.getElementById("admin-allow-cancel-toggle");
+  if (checkbox) {
+    checkbox.checked = !!STATE.allowCancellation;
+  }
   
   // Populate dates select filter for slots table
   const dateFilterSelect = document.getElementById("admin-slots-date-filter");
@@ -2077,6 +2105,48 @@ async function triggerAutoAllocation() {
     console.error(err);
     hideLoader();
     showToast(`เกิดข้อผิดพลาด: ${err.message}`, "error");
+  }
+}
+
+/**
+ * Toggle allow cancellation setting from Admin Panel
+ */
+async function toggleCancelButtonSetting(checked) {
+  if (CONFIG.currentMode === "mock") {
+    localStorage.setItem("ALLOW_CANCELLATION", checked ? "true" : "false");
+    STATE.allowCancellation = checked;
+    showToast(checked ? "เปิดปุ่มยกเลิกการลงทะเบียนเรียบร้อยแล้วค่ะ" : "ซ่อนปุ่มยกเลิกการลงทะเบียนเรียบร้อยแล้วค่ะ", "success");
+    // Update active details card immediately if shown
+    const cancelBtn = document.querySelector("#result-card-container .btn-card-cancel");
+    if (cancelBtn) {
+      cancelBtn.style.display = checked ? "inline-flex" : "none";
+    }
+  } else {
+    showLoader("กำลังอัปเดตการตั้งค่า...");
+    try {
+      const res = await callApi("saveSetting", ["allow_cancellation", checked ? "TRUE" : "FALSE"]);
+      if (res && res.success) {
+        STATE.allowCancellation = checked;
+        showToast(checked ? "เปิดปุ่มยกเลิกการลงทะเบียนเรียบร้อยแล้วค่ะ" : "ซ่อนปุ่มยกเลิกการลงทะเบียนเรียบร้อยแล้วค่ะ", "success");
+        // Update active details card immediately if shown
+        const cancelBtn = document.querySelector("#result-card-container .btn-card-cancel");
+        if (cancelBtn) {
+          cancelBtn.style.display = checked ? "inline-flex" : "none";
+        }
+      } else {
+        throw new Error(res.error || "บันทึกข้อมูลล้มเหลว");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(`มีข้อผิดพลาด: ${err.message}`, "error");
+      // Revert checkbox state
+      const checkbox = document.getElementById("admin-allow-cancel-toggle");
+      if (checkbox) {
+        checkbox.checked = STATE.allowCancellation;
+      }
+    } finally {
+      hideLoader();
+    }
   }
 }
 
