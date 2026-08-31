@@ -57,6 +57,8 @@ function doPost(e) {
       result = getRegistrationByEmpId(args[0]);
     } else if (action === "deleteRegistration") {
       result = deleteRegistration(args[0], args[1]);
+    } else if (action === "saveSetting") {
+      result = saveSetting(args[0], args[1]);
     } else if (action === "initializeSheets") {
       result = initializeSheets();
     } else if (action === "getAdminDashboardData") {
@@ -382,7 +384,8 @@ function getConfigAndSlots() {
   var result = {
     dates: dates,
     timeSlots: timeSlots,
-    registrationCounts: registrationCounts
+    registrationCounts: registrationCounts,
+    allowCancellation: getAllowCancellationSetting()
   };
   
   // Store in cache for 15 seconds (distributes load of 2000 users)
@@ -549,6 +552,26 @@ function saveRegistration(regData) {
       console.warn("Could not update name registration status:", e);
     }
     
+    // Delete any existing cancellation log for this employee to prevent duplicates if they re-register
+    try {
+      var cancelSheet = ss.getSheetByName("Cancel_Log");
+      if (cancelSheet) {
+        var cancelData = cancelSheet.getDataRange().getDisplayValues();
+        // Go backwards to prevent index shift problems when deleting rows
+        for (var c = cancelData.length - 1; c >= 1; c--) {
+          var cancelId = String(cancelData[c][0]).trim().replace(/^'/, '');
+          if (/^\d+$/.test(cancelId)) {
+            cancelId = cancelId.padStart(6, '0');
+          }
+          if (cancelId === employeeId) {
+            cancelSheet.deleteRow(c + 1); // 1-indexed row number
+          }
+        }
+      }
+    } catch (cancelLogErr) {
+      console.warn("Could not clear cancellation log for employee:", cancelLogErr);
+    }
+    
     // Clear cache to keep counts and employee details up to date under high concurrency (2000 users)
     try {
       var cache = CacheService.getScriptCache();
@@ -662,6 +685,9 @@ function deleteRegistration(employeeId, reason) {
   }
   
   try {
+    if (!getAllowCancellationSetting()) {
+      throw new Error("ระบบยังไม่เปิดให้พนักงานยกเลิกการลงทะเบียนตรวจสุขภาพด้วยตนเองในขณะนี้ค่ะ");
+    }
     var ss = getSpreadsheet();
     var regSheet = ss.getSheetByName("Registration");
     if (!regSheet) return { success: false, error: "Registration sheet not found" };
@@ -869,7 +895,16 @@ function initializeSheets() {
     regSheet.getRange("A1:N1").setFontWeight("bold").setBackground("#d9ead3");
   }
   
-  return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', and 'Registration' sheets created/verified.";
+  // 5. Config_Settings Sheet
+  var settingsSheet = ss.getSheetByName("Config_Settings");
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet("Config_Settings");
+    settingsSheet.appendRow(["Setting Name", "Setting Value"]);
+    settingsSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#c9daf8");
+    settingsSheet.appendRow(["allow_cancellation", "FALSE"]);
+  }
+  
+  return "Initialization successful. 'Name', 'Config_Dates', 'Config_TimeSlots', 'Registration', and 'Config_Settings' sheets created/verified.";
 }
 
 /**
@@ -967,7 +1002,8 @@ function getAdminDashboardData() {
   
   return {
     employees: employees,
-    registrations: registrations
+    registrations: registrations,
+    allowCancellation: getAllowCancellationSetting()
   };
 }
 
@@ -1318,6 +1354,26 @@ function autoAllocateRemainingEmployees() {
         
         // Update Name sheet status
         nameSheet.getRange(i + 1, colStatus + 1).setValue("ลงทะเบียนแล้ว");
+        
+        // Delete any existing cancellation log for this employee to prevent duplicates
+        try {
+          var cancelSheet = ss.getSheetByName("Cancel_Log");
+          if (cancelSheet) {
+            var cancelData = cancelSheet.getDataRange().getDisplayValues();
+            for (var c = cancelData.length - 1; c >= 1; c--) {
+              var cancelId = String(cancelData[c][0]).trim().replace(/^'/, '');
+              if (/^\d+$/.test(cancelId)) {
+                cancelId = cancelId.padStart(6, '0');
+              }
+              if (cancelId === empId) {
+                cancelSheet.deleteRow(c + 1);
+              }
+            }
+          }
+        } catch (cancelLogErr) {
+          console.warn("Could not clear cancellation log for employee in autoallocate:", cancelLogErr);
+        }
+        
         successCount++;
       } else {
         noSlotCount++;
@@ -1349,5 +1405,76 @@ function autoAllocateRemainingEmployees() {
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Get setting value from Config_Settings sheet
+ */
+function getAllowCancellationSetting() {
+  try {
+    var ss = getSpreadsheet();
+    var settingsSheet = ss.getSheetByName("Config_Settings");
+    if (!settingsSheet) {
+      // Create it if it doesn't exist to prevent errors
+      settingsSheet = ss.insertSheet("Config_Settings");
+      settingsSheet.appendRow(["Setting Name", "Setting Value"]);
+      settingsSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#c9daf8");
+      settingsSheet.appendRow(["allow_cancellation", "FALSE"]);
+      return false;
+    }
+    
+    var data = settingsSheet.getDataRange().getDisplayValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === "allow_cancellation") {
+        var val = String(data[i][1]).trim().toUpperCase();
+        return (val === "TRUE" || val === "YES" || val === "1");
+      }
+    }
+    
+    // Add default row if missing
+    settingsSheet.appendRow(["allow_cancellation", "FALSE"]);
+    return false;
+  } catch (err) {
+    console.warn("Error reading Config_Settings:", err.toString());
+    return false;
+  }
+}
+
+/**
+ * Save configuration setting to Config_Settings sheet
+ */
+function saveSetting(settingName, settingValue) {
+  var ss = getSpreadsheet();
+  var settingsSheet = ss.getSheetByName("Config_Settings");
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet("Config_Settings");
+    settingsSheet.appendRow(["Setting Name", "Setting Value"]);
+    settingsSheet.getRange("A1:B1").setFontWeight("bold").setBackground("#c9daf8");
+  }
+  
+  var data = settingsSheet.getDataRange().getDisplayValues();
+  var foundRow = -1;
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === settingName) {
+      foundRow = i + 1; // 1-indexed row index
+      break;
+    }
+  }
+  
+  if (foundRow !== -1) {
+    settingsSheet.getRange(foundRow, 2).setValue(settingValue);
+  } else {
+    settingsSheet.appendRow([settingName, settingValue]);
+  }
+  
+  // Evict config cache so that it is reloaded immediately
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.remove("config_and_slots");
+  } catch (e) {
+    console.warn("Cache eviction error in saveSetting: " + e.toString());
+  }
+  
+  return { success: true };
 }
 
