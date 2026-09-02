@@ -2701,4 +2701,633 @@ select:disabled {
   transform: translateX(22px);
 }
 
+/* --- Aesthetic Special Catalog Infographic Portal Styles --- */
+.poster-hero-card {
+  background: linear-gradient(135deg, #fffbf5 0%, #fff1f2 45%, #ffe4e6 100%);
+  border: 1.5px solid #fecdd3;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(244, 63, 94, 0.08);
+  padding: 26px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.poster-hero-card::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(251, 113, 133, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.poster-hero-top {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.poster-badge-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.poster-badge-pill {
+  background: #ffffff;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.poster-badge-count {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #ffffff;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(225, 29, 72, 0.28);
+}
+
+.poster-hero-title {
+  font-size: 1.55rem;
+  color: #1e293b;
+  font-weight: 800;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.poster-hero-subtitle {
+  font-size: 0.92rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.poster-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.poster-hl-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid #fee2e2;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.poster-hl-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #1e293b;
+  font-size: 0.92rem;
+}
+
+.poster-hl-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff1f2;
+  color: #f43f5e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.poster-hl-icon.pink {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.poster-hl-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.poster-hl-tag {
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.poster-hl-quote {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #e11d48;
+  margin: 0;
+  font-weight: 600;
+}
+
+.poster-hl-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.poster-hl-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.poster-hl-list li i {
+  color: #10b981;
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+/* Toolbar: Search & Pastel Filter Pills */
+.poster-toolbar {
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.poster-search-box {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.poster-search-box .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f43f5e;
+  font-size: 1rem;
+}
+
+.poster-search-input {
+  width: 100%;
+  padding: 12px 42px 12px 46px;
+  border: 1.5px solid #fecdd3;
+  border-radius: 30px;
+  font-size: 0.92rem;
+  outline: none;
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.05);
+  transition: all 0.2s;
+}
+
+.poster-search-input:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.15);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.search-clear-btn:hover {
+  color: #f43f5e;
+}
+
+.poster-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.poster-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.poster-chip:hover {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.poster-chip.active {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #e11d48;
+  border-color: #f43f5e;
+  box-shadow: 0 3px 10px rgba(244, 63, 94, 0.15);
+}
+
+/* Digital Poster Table */
+.poster-table-card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #fecdd3;
+  overflow: hidden;
+  margin-bottom: 26px;
+  text-align: left;
+}
+
+.poster-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.poster-catalog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.poster-catalog-table thead th {
+  background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+  color: #ffffff;
+  padding: 14px 18px;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: 0.2px;
+}
+
+.poster-catalog-table thead th.col-num {
+  text-align: center;
+  width: 65px;
+}
+
+.poster-catalog-table thead th.col-price {
+  text-align: right;
+  width: 155px;
+}
+
+.poster-catalog-table thead th.col-notes {
+  width: 38%;
+}
+
+.poster-catalog-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.15s ease;
+}
+
+.poster-catalog-table tbody tr:hover {
+  background-color: #fff5f5;
+}
+
+.poster-catalog-table tbody tr:nth-child(even) {
+  background-color: #fffdfc;
+}
+
+.poster-catalog-table tbody tr:nth-child(even):hover {
+  background-color: #fff5f5;
+}
+
+.poster-catalog-table tbody td {
+  padding: 13px 18px;
+  vertical-align: middle;
+}
+
+.catalog-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+.catalog-test-title {
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.94rem;
+}
+
+.catalog-test-icon {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  flex-shrink: 0;
+}
+
+.catalog-price-val {
+  color: #e11d48;
+  font-weight: 800;
+  font-size: 1.08rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.catalog-badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.catalog-badge-tag.fasting {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.catalog-badge-tag.welfare {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbeafe;
+}
+
+.catalog-badge-tag.new-item {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+}
+
+.catalog-badge-tag.sso {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #dcfce7;
+}
+
+.catalog-notes-text {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+/* Footer Guidelines & Contact Box */
+.poster-footer-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.poster-notice-card {
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.poster-notice-card.reminder {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.poster-notice-card.idcard {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.poster-notice-card.contact {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.notice-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.notice-icon-circle.orange {
+  background: #ea580c;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.3);
+}
+
+.notice-icon-circle.blue {
+  background: #2563eb;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+}
+
+.notice-icon-circle.pink {
+  background: #e11d48;
+  box-shadow: 0 3px 10px rgba(225, 29, 72, 0.3);
+}
+
+.notice-body {
+  flex: 1;
+}
+
+.notice-title {
+  font-size: 0.92rem;
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.poster-notice-card.reminder .notice-title { color: #9a3412; }
+.poster-notice-card.idcard .notice-title { color: #1e40af; }
+.poster-notice-card.contact .notice-title { color: #9f1239; }
+
+.notice-desc {
+  font-size: 0.84rem;
+  margin: 0;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.phone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e11d48;
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-left: 6px;
+  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.25);
+}
+
+.poster-bottom-note {
+  margin-top: 16px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.82rem;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.poster-bottom-note strong {
+  color: #334155;
+}
+
+/* Welfare Table Card for Age 50+ */
+.welfare-table-card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(2, 132, 199, 0.07);
+  border: 1.5px solid #bae6fd;
+  overflow: hidden;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.welfare-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.welfare-card-header h3 {
+  font-size: 1.22rem;
+  font-weight: 800;
+  color: #0369a1;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.welfare-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.welfare-custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.welfare-custom-table thead th {
+  background: #f8fafc;
+  color: #334155;
+  padding: 13px 16px;
+  font-weight: 700;
+  border-bottom: 1.5px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.welfare-custom-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.welfare-custom-table tbody tr:hover {
+  background-color: #f0f9ff;
+}
+
+.welfare-custom-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.welfare-custom-table tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.welfare-test-name {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
+  margin-bottom: 3px;
+}
+
+.welfare-test-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.welfare-max-limit {
+  font-weight: 800;
+  color: #059669;
+  font-size: 0.96rem;
+  white-space: nowrap;
+}
+
+.welfare-footnote {
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.45;
+}
+
 
