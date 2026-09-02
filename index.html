@@ -47,6 +47,7 @@
       <div class="welcome-text">
         <h3>ยินดีต้อนรับสู่ระบบลงทะเบียนตรวจสุขภาพพนักงาน</h3>
         <p>กรุณากรอกรหัสพนักงานเพื่อดูโปรแกรมตรวจสุขภาพเฉพาะบุคคล เลือกกะการทำงาน สถานที่ และรอบเวลาที่สะดวก</p>
+        <p>หากครบกำหนดเวลาที่ให้ลงทะเบียนแล้ว เจ้าหน้าที่จะขอจัดรอบตรวจสุขภาพให้พนักงานที่ยังไม่ได้ลงทะเบียนอัตโนมัติ</p>
       </div>
     </div>
 
@@ -226,7 +227,7 @@
 
             <div class="form-group full-width">
               <div class="label-row-slots">
-                <label><i class="fa-solid fa-clock"></i> เลือกรอบเวลาที่ต้องการตรวจสุขภาพ </label>
+                <label><i class="fa-solid fa-clock"></i> รอบเวลาที่ต้องการตรวจสุขภาพ </label>
                 <span class="realtime-sync-status" id="realtime-sync-status">
                   <span class="pulse-dot"></span>
                   <span class="sync-text">เชื่อมต่อเรียลไทม์</span>
@@ -234,8 +235,7 @@
               </div>
               <div class="time-slots-info-box">
                 <i class="fa-solid fa-circle-info"></i>
-                <span><strong>หมายเหตุ1:</strong> เฉพาะช่วงเวลา 06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้ ในช่วงเวลา 8.00 - 15.00 น.</span>
-                 <span><strong>หมายเหตุ2:</strong> หากครบกำหนดเวลาที่ให้ลงทะเบียนแล้ว เจ้าหน้าที่จะขอจัดรอบตรวจสุขภาพให้พนักงานที่ยังไม่ได้ลงทะเบียนอัตโนมัติ </span>
+                <span><strong>หมายเหตุ:</strong> เฉพาะช่วงเวลา 06:00 - 08:00 น. เปิดเฉพาะจุดเจาะเลือดเท่านั้น พนักงานที่มีรายการตรวจไขมันและน้ำตาลที่ต้องงดน้ำและอาหาร สามารถมาลงทะเบียนเจาะเลือดตรวจก่อนโดยนำบัตรประชาชนตัวจริงพร้อมใบนัดมาด้วย แล้วให้มาตรวจรายการอื่นตามเวลาที่ลงทะเบียนไว้ ในช่วงเวลา 8.00 - 15.00 น.</span>
               </div>
               
               <div class="time-slots-wrapper">
@@ -403,14 +403,229 @@
       
     </div>
 
-    <div class="tab-content" id="tab-special-catalog" style="text-align: center; padding: 1.5rem 0;">
-      <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center; width: 100%;">
-        <div class="catalog-infographic-container" style="max-width: 1000px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; background: #fff;">
-          <img src="special_catalog_infographic.jpg" alt="รายการตรวจสุขภาพพิเศษ (ชำระเงินเอง)" style="width: 100%; height: auto; display: block;">
+    <div class="tab-content" id="tab-special-catalog" style="padding: 1rem 0 2rem;">
+      <!-- Hero Poster Header Container -->
+      <div class="poster-hero-card">
+        <div class="poster-hero-top">
+          <div class="poster-badge-wrap">
+            <span class="poster-badge-pill"><i class="fa-solid fa-sparkles" style="color: #f43f5e;"></i> รายการตรวจสุขภาพ ชำระเงินเอง</span>
+            <span class="poster-badge-count">34 รายการ</span>
+          </div>
+          <h2 class="poster-hero-title">
+            โปรแกรมตรวจสุขภาพพิเศษ (ชำระเงินเอง)
+          </h2>
+          <p class="poster-hero-subtitle">
+            💖 เลือกตรวจได้ตามความเหมาะสม เพื่อสุขภาพที่ดีและอุ่นใจในทุกๆ วัน (ชำระเงิน ณ วันที่เข้ารับการตรวจสุขภาพ)
+          </p>
         </div>
-        <div class="catalog-infographic-container" style="max-width: 1000px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; background: #fff;">
-          <img src="special_welfare_table.png" alt="ตารางสวัสดิการสำหรับพนักงานอายุ 50 ปีขึ้นไป" style="width: 100%; height: auto; display: block;">
+
+        <!-- Infographic Highlights Grid matching the poster side cards -->
+        <div class="poster-highlights-grid">
+          <div class="poster-hl-card">
+            <div>
+              <div class="poster-hl-header">
+                <span class="poster-hl-icon"><i class="fa-solid fa-heart-pulse"></i></span>
+                <strong>ดูแลตัวเองวันนี้ เพื่อสุขภาพที่ดีในวันหน้า</strong>
+              </div>
+              <div class="poster-hl-tags">
+                <span class="poster-hl-tag"><i class="fa-solid fa-check"></i> ดูแลสวัสดิการ</span>
+                <span class="poster-hl-tag"><i class="fa-solid fa-check"></i> ประสานงานตรวจสุขภาพ</span>
+                <span class="poster-hl-tag"><i class="fa-solid fa-check"></i> สิทธิประโยชน์ประกันสังคม</span>
+                <span class="poster-hl-tag"><i class="fa-solid fa-check"></i> สุขภาพกายใจของพนักงาน</span>
+              </div>
+            </div>
+            <p class="poster-hl-quote">"สุขภาพดี คือพลังสำคัญในการทำงานและการใช้ชีวิต"</p>
+          </div>
+
+          <div class="poster-hl-card">
+            <div>
+              <div class="poster-hl-header">
+                <span class="poster-hl-icon pink"><i class="fa-solid fa-clipboard-check"></i></span>
+                <strong>ANNUAL HEALTH CHECKUP 2569</strong>
+              </div>
+              <ul class="poster-hl-list">
+                <li><i class="fa-solid fa-circle-check"></i> <span>ผลตรวจแม่นยำ พร้อมคำแนะนำจากทีมแพทย์ผู้เชี่ยวชาญ</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span>มีสวัสดิการสมทบช่วยเหลือ 50% สำหรับพนักงานอายุ 50 ปีขึ้นไป</span></li>
+                <li><i class="fa-solid fa-circle-check"></i> <span>มีรายการตรวจฟรีตามสิทธิ์ประกันสังคมในรายการที่กำหนด</span></li>
+              </ul>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Search Bar & Category Filter Pills -->
+      <div class="poster-toolbar">
+        <div class="poster-search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="special-catalog-search" class="poster-search-input" placeholder="ค้นหาชื่อรายการตรวจ เช่น ไทรอยด์, มะเร็ง, EKG, ไขมัน, ตับ, Troponin, สแกน..." oninput="handleCatalogSearch(this.value)">
+          <button type="button" class="search-clear-btn" id="catalog-search-clear" onclick="clearCatalogSearch()" title="ล้างการค้นหา" style="display: none;">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <div class="poster-filter-chips">
+          <button class="poster-chip active" onclick="filterCatalogByChip('all', this)">
+            <i class="fa-solid fa-list-check"></i> ทั้งหมด (34 รายการ)
+          </button>
+          <button class="poster-chip" onclick="filterCatalogByChip('blood', this)">
+            <i class="fa-solid fa-droplet" style="color: #ef4444;"></i> ตรวจเลือด & สมรรถภาพ
+          </button>
+          <button class="poster-chip" onclick="filterCatalogByChip('cancer', this)">
+            <i class="fa-solid fa-ribbon" style="color: #f43f5e;"></i> ตรวจคัดกรองมะเร็ง
+          </button>
+          <button class="poster-chip" onclick="filterCatalogByChip('welfare', this)">
+            <i class="fa-solid fa-gift" style="color: #2563eb;"></i> สวัสดิการอายุ 50 ปีขึ้นไป (ช่วย 50%)
+          </button>
+          <button class="poster-chip" onclick="filterCatalogByChip('fasting', this)">
+            <i class="fa-solid fa-utensils" style="color: #ea580c;"></i> ต้องงดน้ำ-อาหาร
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Crisp Digital Table -->
+      <div class="poster-table-card">
+        <div class="poster-table-responsive">
+          <table class="poster-catalog-table">
+            <thead>
+              <tr>
+                <th class="col-num">ลำดับ</th>
+                <th class="col-name">รายการตรวจสุขภาพ</th>
+                <th class="col-price">ราคาปกติ (บาท)</th>
+                <th class="col-notes">หมายเหตุ / สิทธิประโยชน์</th>
+              </tr>
+            </thead>
+            <tbody id="special-catalog-table-body">
+              <!-- Rendered dynamically via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Welfare Program Table for Age 50+ (Exact Replica of Document) -->
+      <div class="welfare-table-card">
+        <div class="welfare-card-header">
+          <h3>
+            <i class="fa-solid fa-list-check"></i> ตารางสวัสดิการสำหรับพนักงานอายุ 50 ปีขึ้นไป
+          </h3>
+        </div>
+
+        <div class="welfare-table-responsive">
+          <table class="welfare-custom-table">
+            <thead>
+              <tr>
+                <th style="min-width: 200px;">ประเภทการตรวจคัดกรอง</th>
+                <th style="min-width: 130px;">บริษัทช่วยเหลือ</th>
+                <th style="min-width: 150px;">วงเงินช่วยเหลือสูงสุด</th>
+                <th style="min-width: 170px;">ระดับของพนักงานที่ได้รับสิทธิ์</th>
+                <th style="min-width: 130px;">ความถี่สิทธิ์</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">Mammogram</div>
+                  <div class="welfare-test-sub">ตรวจหาความผิดปกติของเต้านม (ผู้หญิง)</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">1,500 บาท</span></td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">Thin Prep</div>
+                  <div class="welfare-test-sub">ตรวจคัดกรองมะเร็งปากมดลูก (ผู้หญิง)</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">1,500 บาท</span></td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">Prostate Screening</div>
+                  <div class="welfare-test-sub">ตรวจมะเร็งต่อมลูกหมากโดยแพทย์ (ผู้ชาย)</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">1,000 บาท</span></td>
+                <td>ทุกระดับ</td>
+                <td>ประจำปี</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">CT Calcium Score</div>
+                  <div class="welfare-test-sub">ตรวจแคลเซียมที่ผนังหลอดเลือดหัวใจ</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">2,000 บาท</span></td>
+                <td>ระดับ M4/T5 ขึ้นไป</td>
+                <td>ทุก 5 ปี</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">Colonoscopy</div>
+                  <div class="welfare-test-sub">การส่องกล้องตรวจลำไส้ใหญ่ (รวมตรวจตัดชิ้นเนื้อ)</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">15,000 บาท</span></td>
+                <td>ระดับ M5/T6 ขึ้นไป</td>
+                <td>ทุก 5 ปี</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="welfare-test-name">MRI Brain (MRI & MRA)</div>
+                  <div class="welfare-test-sub">ตรวจสมองด้วยคลื่นแม่เหล็กไฟฟ้า</div>
+                </td>
+                <td>50% ของราคา</td>
+                <td><span class="welfare-max-limit">10,000 บาท</span></td>
+                <td>ระดับ M5/T6 ขึ้นไป</td>
+                <td>1 ครั้ง ตลอดอายุงาน</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="welfare-footnote">
+          ** ยื่นแบบฟอร์มขอเบิกค่ารักษาพยาบาล ใบเสร็จ ใบรับรองแพทย์ตัวจริง พร้อมผลตรวจเสนอหัวหน้างานอนุมัติ
+        </div>
+      </div>
+
+      <!-- Guidelines, Fasting Prep & Contact Strip (Matching Poster) -->
+      <div class="poster-footer-strip">
+        <div class="poster-notice-card reminder">
+          <div class="notice-icon-circle orange"><i class="fa-solid fa-utensils"></i></div>
+          <div class="notice-body">
+            <strong class="notice-title">การเตรียมตัวตรวจสุขภาพ (งดน้ำ-งดอาหาร):</strong>
+            <p class="notice-desc">
+              กรณีเลือกตรวจที่มีการเจาะเลือด ไขมัน หรือน้ำตาล โปรด<strong>งดน้ำและงดอาหาร 8 - 12 ชั่วโมง</strong>ก่อนเจาะเลือด
+            </p>
+          </div>
+        </div>
+
+        <div class="poster-notice-card idcard">
+          <div class="notice-icon-circle blue"><i class="fa-solid fa-id-card"></i></div>
+          <div class="notice-body">
+            <strong class="notice-title">เอกสารสำคัญที่ต้องนำมา:</strong>
+            <p class="notice-desc">
+              กรุณานำ<strong>บัตรประจำตัวประชาชน</strong>มาแสดงในวันเข้ารับการตรวจสุขภาพทุกครั้ง
+            </p>
+          </div>
+        </div>
+
+        <div class="poster-notice-card contact">
+          <div class="notice-icon-circle pink"><i class="fa-solid fa-phone-volume"></i></div>
+          <div class="notice-body">
+            <strong class="notice-title">สอบถามข้อมูลเพิ่มเติม:</strong>
+            <p class="notice-desc">
+              ติดต่อพี่อิ๋ว / พี่หมิว แผนก HRD 
+              <span class="phone-badge"><i class="fa-solid fa-phone"></i> เบอร์ภายใน 403</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="poster-bottom-note">
+        <i class="fa-solid fa-circle-info" style="color: #f43f5e;"></i> <strong>หมายเหตุ:</strong> รายการตรวจพิเศษนี้จะมีระบุอยู่ในใบนัดตรวจสุขภาพ ท่านสามารถแจ้งความประสงค์เลือกตรวจเพิ่มเติมและชำระเงินกับทางโรงพยาบาล ณ วันที่เข้ารับการตรวจได้ทันที
       </div>
     </div>
 
