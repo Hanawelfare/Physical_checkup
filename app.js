@@ -1112,12 +1112,12 @@ function renderStatusCard(reg, searchId) {
   if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
     const item = document.createElement("div");
     item.className = "ticket-test-item cancer-gold";
+    const cancerIdx = tests.length + 1;
     item.innerHTML = `
       <i class="fa-solid fa-crown"></i>
-      <span>${currentIdx}. ${reg.cancerTest}</span>
+      <span>${cancerIdx}. ${reg.cancerTest}</span>
     `;
     checklistContainer.appendChild(item);
-    currentIdx++;
   }
   
   const cardSsoSection = document.getElementById("card-sso-section");
