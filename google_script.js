@@ -592,7 +592,7 @@ function saveRegistration(regData) {
  * Find user registration record
  */
 function getRegistrationByEmpId(employeeId) {
-  var idToFind = String(employeeId).trim();
+  var idToFind = String(employeeId).trim().replace(/^'/, '');
   if (/^\d+$/.test(idToFind)) {
     idToFind = idToFind.padStart(6, '0');
   }
@@ -615,20 +615,56 @@ function getRegistrationByEmpId(employeeId) {
   var lastRow = regSheet.getLastRow();
   if (lastRow <= 1) return null;
   
-  // Read headers only (1 row) to dynamically map column letter
-  var headers = regSheet.getRange(1, 1, 1, regSheet.getLastColumn()).getValues()[0].map(function(h) { return String(h).trim(); });
-  var colIdIdx = headers.indexOf("รหัสพนักงาน");
-  if (colIdIdx === -1) return null;
+  // Read headers dynamically
+  var headers = regSheet.getRange(1, 1, 1, regSheet.getLastColumn()).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+  var colIdIdx = -1;
+  for (var h = 0; h < headers.length; h++) {
+    var cleanHeader = headers[h].replace(/\s+/g, '');
+    if (cleanHeader === "รหัสพนักงาน" || cleanHeader.toLowerCase() === "empid" || cleanHeader.toLowerCase() === "employeeid" || cleanHeader === "รหัส") {
+      colIdIdx = h;
+      break;
+    }
+  }
+  if (colIdIdx === -1) colIdIdx = 0; // Fallback to column A
   
   var colLetter = getColumnLetter(colIdIdx + 1);
-  
-  // Fast search using Google Sheets native TextFinder on the ID column range (milliseconds lookup)
   var searchRange = regSheet.getRange(colLetter + "2:" + colLetter + lastRow);
+  
+  // Search strategy 1: TextFinder exact padded ID
   var cell = searchRange.createTextFinder(idToFind).matchEntireCell(true).findNext();
-  if (!cell) return null;
+  
+  // Search strategy 2: TextFinder exact unpadded ID
+  var unpaddedId = idToFind.replace(/^0+/, '');
+  if (!cell && unpaddedId && unpaddedId !== idToFind) {
+    cell = searchRange.createTextFinder(unpaddedId).matchEntireCell(true).findNext();
+  }
+  
+  // Search strategy 3: TextFinder partial match (handles quotes or spaces)
+  if (!cell) {
+    cell = searchRange.createTextFinder(idToFind).findNext();
+  }
+  if (!cell && unpaddedId) {
+    cell = searchRange.createTextFinder(unpaddedId).findNext();
+  }
+  
+  // Search strategy 4: Direct column values scan
+  var rowIdx = -1;
+  if (cell) {
+    rowIdx = cell.getRow();
+  } else {
+    var colValues = searchRange.getDisplayValues();
+    for (var r = 0; r < colValues.length; r++) {
+      var val = String(colValues[r][0]).trim().replace(/^'/, '');
+      if (val === idToFind || val === unpaddedId || (val.length < 6 && /^\d+$/.test(val) && val.padStart(6, '0') === idToFind)) {
+        rowIdx = r + 2; // +2 for header and 1-indexing
+        break;
+      }
+    }
+  }
+  
+  if (rowIdx === -1) return null;
   
   // Read ONLY the matching registration row
-  var rowIdx = cell.getRow();
   var row = regSheet.getRange(rowIdx, 1, 1, headers.length).getDisplayValues()[0];
   
   var colPhone = headers.indexOf("เบอร์โทรภายใน");
@@ -642,13 +678,18 @@ function getRegistrationByEmpId(employeeId) {
   var colSso = headers.indexOf("การยินยอมใช้สิทธิ์ประกันสังคม");
   var colTimeCreated = headers.indexOf("Timestamp");
   
-  var empDetail = getEmployeeData(idToFind) || {};
+  var empDetail = {};
+  try {
+    empDetail = getEmployeeData(idToFind) || {};
+  } catch (e) {
+    console.warn("Could not load employee details from Name sheet:", e);
+  }
   
   var result = {
     employeeId: idToFind,
-    firstName: empDetail.firstName || String(row[1]).trim(),
-    lastName: empDetail.lastName || String(row[2]).trim(),
-    department: empDetail.department || String(row[3]).trim(),
+    firstName: empDetail.firstName || String(row[1] || "").trim(),
+    lastName: empDetail.lastName || String(row[2] || "").trim(),
+    department: empDetail.department || String(row[3] || "").trim(),
     programGroup: empDetail.programGroup || "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป",
     age: empDetail.age || 0,
     gender: empDetail.gender || "",
