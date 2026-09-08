@@ -22,7 +22,16 @@ const STATE = {
   isAdminAuthenticated: false,
   adminSubTab: "slots",
   adminDashboardData: null,
-  allowCancellation: false
+  allowCancellation: false,
+  isRegistrationClosed: false
+};
+
+// --- Client-Side High-Speed Memory & Session Cache (0ms response time) ---
+const CLIENT_CACHE = {
+  employees: {},
+  registrations: {},
+  config: null,
+  configTimestamp: 0
 };
 
 // --- Special Self-Pay Test Catalog Data (34 items) ---
@@ -99,18 +108,19 @@ const PROGRAM_TESTS = {
 
 // --- Mock Data for Offline Mode ---
 const MOCK_EMPLOYEES = [
-  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี", isPregnant: true },
-  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว" },
-  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "M", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG), ตรวจสมรรถภาพปอด" },
-  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "" },
-  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, gender: "M", programGroup: "MGR", riskProgram: "" },
-  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, gender: "F", programGroup: "โปรแกรม MGR", riskProgram: "" },
-  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, gender: "M", programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", checkupRight: "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)" }
+  { employeeId: "003049", firstName: "วิชัย", lastName: "สุขประเสริฐกุล", department: "OPT", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 59, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "", remark: "", ssoApprovedTests: "ตรวจน้ำตาลในเลือด (FBS), ตรวจการทำงานของไต (Cr)" },
+  { employeeId: "004148", firstName: "ประภาพร", lastName: "ศรีประดู่", department: "HRDS", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจการได้ยิน (Audiogram), ตรวจปัสสาวะหาสารเคมี", isPregnant: true, remark: "", ssoApprovedTests: "ตรวจน้ำตาลในเลือด (FBS), ตรวจหาเชื้อไวรัสตับอักเสบชนิดบี (HBs Ag)" },
+  { employeeId: "004379", firstName: "ประคอง", lastName: "อ้อยงาม", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 54, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "ตรวจหาสารตะกั่ว", remark: "", ssoApprovedTests: "ตรวจน้ำตาลในเลือด (FBS), ตรวจการทำงานของไต (Cr)" },
+  { employeeId: "004766", firstName: "พวงเพชร", lastName: "มณีฉาย", department: "CADT", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 55, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "", remark: "", ssoApprovedTests: "" },
+  { employeeId: "005933", firstName: "ระเบียบ", lastName: "ปาละรัตน์", department: "QM", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 60, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "", remark: "ลาป่วยยาว", ssoApprovedTests: "" },
+  { employeeId: "006078", firstName: "อดิเรก", lastName: "อ่อนพรม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 57, gender: "M", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "", remark: "ลาออก", ssoApprovedTests: "" },
+  { employeeId: "006125", firstName: "ยุทธนา", lastName: "สุยะนันทน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "ตรวจคลื่นไฟฟ้าหัวใจ (EKG), ตรวจสมรรถภาพปอด", remark: "", ssoApprovedTests: "ตรวจน้ำตาลในเลือด (FBS)" },
+  { employeeId: "007860", firstName: "วิไล", lastName: "แสวงศรี", department: "OP4", defaultLocation: "LPN1", programName: "โปรแกรมอายุ 35 ปีขึ้นไป", age: 49, gender: "F", programGroup: "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป", riskProgram: "", remark: "", ssoApprovedTests: "ตรวจไขมันในเลือด (Cholesterol, HDL), ตรวจหาเชื้อไวรัสตับอักเสบชนิดบี (HBs Ag)" },
+  { employeeId: "009892", firstName: "สมชาย", lastName: "ม่วงไหม", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 56, gender: "M", programGroup: "โปรแกรม MGR", riskProgram: "", remark: "", ssoApprovedTests: "" },
+  { employeeId: "010268", firstName: "ยอดธง", lastName: "กรวิรัตน์", department: "OP2S", defaultLocation: "LPN2", programName: "โปรแกรม MGR", age: 55, gender: "M", programGroup: "MGR", riskProgram: "", remark: "อยู่ Hana เกาะกง", ssoApprovedTests: "" },
+  { employeeId: "011382", firstName: "เพียงอัมพร", lastName: "องค์วิศิษฐ์", department: "TRF", defaultLocation: "LPN1", programName: "โปรแกรม MGR", age: 57, gender: "F", programGroup: "โปรแกรม MGR", riskProgram: "", remark: "", ssoApprovedTests: "ตรวจน้ำตาลในเลือด (FBS), ตรวจการทำงานของไต (Cr)" },
+  { employeeId: "011999", firstName: "ณัฐพงษ์", lastName: "รักเรียน", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 28, gender: "M", programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", checkupRight: "ไม่มีสิทธิ์ (อายุงานไม่ถึง 6 เดือน)", remark: "", ssoApprovedTests: "" },
+  { employeeId: "012055", firstName: "กมลวรรณ", lastName: "ทองดี", department: "IT", defaultLocation: "LPN1", programName: "โปรแกรมอายุไม่ถึง 35 ปี", age: 33, gender: "F", programGroup: "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี", riskProgram: "", remark: "", ssoApprovedTests: "ตรวจไขมันในเลือด (Cholesterol, HDL)" }
 ];
 
 const MOCK_CONFIG_DATES = [
@@ -186,11 +196,12 @@ function updateStatusDot(mode) {
 }
 
 // --- Load config settings & counts dynamically ---
-async function loadConfigAndCounts() {
+async function loadConfigAndCounts(forceRefresh = false) {
   if (CONFIG.currentMode === "mock") {
     STATE.configDates = MOCK_CONFIG_DATES;
     STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
     STATE.allowCancellation = localStorage.getItem("ALLOW_CANCELLATION") === "true";
+    STATE.isRegistrationClosed = localStorage.getItem("IS_REGISTRATION_CLOSED") === "true";
     
     const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
     STATE.registrationCounts = {};
@@ -198,7 +209,20 @@ async function loadConfigAndCounts() {
       const key = `${r.location}|${r.dateString}|${r.timeString}`;
       STATE.registrationCounts[key] = (STATE.registrationCounts[key] || 0) + 1;
     });
+    updateRegistrationClosedUI();
   } else {
+    // Check in-memory client cache first (valid for 15s) unless forceRefresh requested
+    const now = Date.now();
+    if (!forceRefresh && CLIENT_CACHE.config && (now - CLIENT_CACHE.configTimestamp < 15000)) {
+      STATE.configDates = CLIENT_CACHE.config.dates;
+      STATE.configTimeSlots = CLIENT_CACHE.config.timeSlots;
+      STATE.registrationCounts = CLIENT_CACHE.config.registrationCounts;
+      STATE.allowCancellation = !!CLIENT_CACHE.config.allowCancellation;
+      STATE.isRegistrationClosed = !!CLIENT_CACHE.config.isRegistrationClosed;
+      updateRegistrationClosedUI();
+      return;
+    }
+
     showLoader("กำลังดึงข้อมูลกำหนดการและสิทธิ์การจองล่าสุด...");
     try {
       const response = await callApi("getConfigAndSlots", []);
@@ -207,6 +231,12 @@ async function loadConfigAndCounts() {
         STATE.configTimeSlots = response.data.timeSlots;
         STATE.registrationCounts = response.data.registrationCounts;
         STATE.allowCancellation = !!response.data.allowCancellation;
+        STATE.isRegistrationClosed = !!response.data.isRegistrationClosed;
+        
+        CLIENT_CACHE.config = response.data;
+        CLIENT_CACHE.configTimestamp = Date.now();
+        
+        updateRegistrationClosedUI();
       } else {
         throw new Error(response.error || "ดึงข้อมูลล้มเหลว");
       }
@@ -216,9 +246,42 @@ async function loadConfigAndCounts() {
       STATE.configDates = MOCK_CONFIG_DATES;
       STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
       STATE.allowCancellation = false;
+      STATE.isRegistrationClosed = false;
+      updateRegistrationClosedUI();
     } finally {
       hideLoader();
     }
+  }
+}
+
+/**
+ * Update UI for open/closed registration state
+ */
+function updateRegistrationClosedUI() {
+  const closedBox = document.getElementById("registration-closed-box");
+  const regForm = document.getElementById("health-registration-form");
+  const isClosed = !!STATE.isRegistrationClosed;
+  
+  if (closedBox && regForm) {
+    if (isClosed) {
+      closedBox.style.display = "block";
+      regForm.style.display = "none";
+    } else {
+      closedBox.style.display = "none";
+      regForm.style.display = "block";
+    }
+  }
+  
+  // Update toggle checkbox in Admin Dashboard if rendered
+  const adminClosedToggle = document.getElementById("admin-reg-closed-toggle");
+  if (adminClosedToggle) {
+    adminClosedToggle.checked = isClosed;
+  }
+  
+  // Hide/Show Edit button on Result Card
+  const editBtn = document.querySelector("#result-card-container .btn-card-edit");
+  if (editBtn) {
+    editBtn.style.display = isClosed ? "none" : "inline-flex";
   }
 }
 
@@ -255,11 +318,42 @@ async function lookupEmployee() {
     empInput.value = empId;
   }
   
+  // 1. Check Fast Client-Side In-Memory & Session Storage Cache (0ms Instant Load)
+  if (CONFIG.currentMode === "api") {
+    let cachedEmp = CLIENT_CACHE.employees[empId];
+    let cachedReg = CLIENT_CACHE.registrations[empId];
+    
+    if (!cachedEmp) {
+      try {
+        const stored = sessionStorage.getItem(`emp_${empId}`);
+        if (stored) {
+          cachedEmp = JSON.parse(stored);
+          CLIENT_CACHE.employees[empId] = cachedEmp;
+        }
+      } catch (e) {}
+    }
+    if (!cachedReg) {
+      try {
+        const storedReg = sessionStorage.getItem(`reg_${empId}`);
+        if (storedReg) {
+          cachedReg = JSON.parse(storedReg);
+          CLIENT_CACHE.registrations[empId] = cachedReg;
+        }
+      } catch (e) {}
+    }
+    
+    // If employee profile is in client cache, render immediately with 0ms delay!
+    if (cachedEmp) {
+      handleEmployeeLookupResult(cachedEmp, cachedReg || null);
+      return;
+    }
+  }
+  
   showLoader("กำลังค้นหาข้อมูลพนักงาน...");
   
   try {
     if (CONFIG.currentMode === "mock") {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
       const emp = MOCK_EMPLOYEES.find(e => e.employeeId === empId);
       if (emp) {
         const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
@@ -278,7 +372,20 @@ async function lookupEmployee() {
       }
       
       if (res && res.success && res.data) {
-        handleEmployeeLookupResult(res.data.employee, res.data.registration);
+        const emp = res.data.employee;
+        const reg = res.data.registration;
+        
+        // Cache to memory and sessionStorage for instant re-access
+        if (emp) {
+          CLIENT_CACHE.employees[empId] = emp;
+          try { sessionStorage.setItem(`emp_${empId}`, JSON.stringify(emp)); } catch (e) {}
+        }
+        if (reg) {
+          CLIENT_CACHE.registrations[empId] = reg;
+          try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(reg)); } catch (e) {}
+        }
+        
+        handleEmployeeLookupResult(emp, reg);
       } else {
         // Fallback: If backend script is not updated yet (throws Action not found)
         const errMsg = (res && res.error) || "";
@@ -295,6 +402,14 @@ async function lookupEmployee() {
                 }
               } catch (e) {
                 console.warn("Could not fetch registration in fallback:", e);
+              }
+              if (empRes.data) {
+                CLIENT_CACHE.employees[empId] = empRes.data;
+                try { sessionStorage.setItem(`emp_${empId}`, JSON.stringify(empRes.data)); } catch (e) {}
+              }
+              if (reg) {
+                CLIENT_CACHE.registrations[empId] = reg;
+                try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(reg)); } catch (e) {}
               }
               handleEmployeeLookupResult(empRes.data, reg);
               showToast("โปรดอัปเดตสคริปต์ Google Script หลังบ้านเพื่อเปิดใช้งานการค้นหาความเร็วสูง", "warning");
@@ -328,6 +443,13 @@ function handleEmployeeLookupResult(employee, registration = null) {
   
   if (employee.checkupRight && employee.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1) {
     showToast("ขออภัย ท่านยังไม่สามารถตรวจสุขภาพประจำปีนี้ได้ เนื่องจากเข้างานยังไม่ครบ 6 เดือน", "error");
+    profileBox.style.display = "none";
+    STATE.activeEmployee = null;
+    return;
+  }
+  
+  if (employee.remark && employee.remark.trim() !== "") {
+    showToast(`ขออภัย ไม่พบสิทธิ์การลงทะเบียนตรวจสุขภาพ เนื่องจากมีหมายเหตุในระบบ: "${employee.remark}" (หากมีข้อสงสัยโปรดติดต่อฝ่ายบุคคล)`, "warning");
     profileBox.style.display = "none";
     STATE.activeEmployee = null;
     return;
@@ -432,69 +554,48 @@ function renderCheckupList(employee, isPregnant = false) {
   if (!itemsList) return;
   itemsList.innerHTML = "";
   
-  // Determine if we should show SSO items (always true now that opt-out is removed)
-  const useSso = true;
-  
   const programGroup = employee.programGroup;
   const baseTests = PROGRAM_TESTS[programGroup] || [];
   
-  // Clone base tests
+  // Clone base company tests
   let tests = baseTests.map(t => ({ ...t, isSso: false }));
   
-  const age = parseInt(employee.age || 0, 10);
-  const isFemale = employee.gender === "F" || employee.gender === "Female" || !!employee.isPregnant;
+  // Social Security (SSO) tests calculated by age (Registration Tab estimation preview)
+  let ssoTests = [];
+  const age = Number(employee.age) || 0;
   
-  if (useSso) {
-    // 3. FBS (age >= 35)
-    if (age >= 35) {
-      let hasFbs = false;
-      tests.forEach(t => {
-        if (programGroup === "โปรแกรม MGR") return;
-        if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
-          t.isSso = true;
-          hasFbs = true;
-        }
-      });
-      if (!hasFbs && programGroup !== "โปรแกรม MGR") {
-        tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
-      }
+  if (age >= 35 || programGroup === "โปรแกรมที่ 1 อายุ 35 ปีขึ้นไป" || programGroup === "โปรแกรม MGR") {
+    // For age 35 and above (เกิดก่อน พ.ศ. 2535):
+    // If not MGR (MGR already includes FBS & Kidney in base tests)
+    if (programGroup !== "โปรแกรม MGR") {
+      ssoTests.push({ name: "ตรวจน้ำตาลในเลือด (FBS)", npo: true, isSso: true });
+      ssoTests.push({ name: "ตรวจการทำงานของไต (Cr)", npo: false, isSso: true });
     }
-    
-    // 4. Kidney Cr (age >= 35)
-    if (age >= 35) {
-      let hasKidney = false;
-      tests.forEach(t => {
-        if (programGroup === "โปรแกรม MGR") return;
-        if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
-          t.isSso = true;
-          hasKidney = true;
-        }
-      });
-      if (!hasKidney && programGroup !== "โปรแกรม MGR") {
-        tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
-      }
-    }
-    
-    // 5. Lipids
-    if (age >= 20 && age < 35) {
-      // 2 items: cholesterol and HDL
-      tests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL) (งดน้ำและอาหาร)", npo: true, isSso: true });
-    }
-    
-    // 6. HbsAg (age >= 35)
-    if (age >= 35) {
-      let hasHbs = false;
-      tests.forEach(t => {
-        if (t.name.includes("HbsAg") || t.name.includes("ตับอักเสบ")) {
-          t.isSso = true;
-          hasHbs = true;
-        }
-      });
-      if (!hasHbs) {
-        tests.push({ name: "เชื้อไวรัสตับอักเสบ HbsAg", npo: false, isSso: true });
-      }
+    // HBs Ag ได้รับสิทธิ์เฉพาะผู้ที่เกิดก่อน พ.ศ. 2535 (อายุ 35 ปีขึ้นไป ในปี 2569)
+    ssoTests.push({ name: "ตรวจหาเชื้อไวรัสตับอักเสบชนิดบี (HBs Ag)", npo: false, isSso: true });
+  } else {
+    // For age under 35 (โปรแกรมที่ 2 อายุไม่ถึง 35 ปี / เกิดตั้งแต่ พ.ศ. 2535 เป็นต้นไป):
+    // สิทธิ์ประกันสังคม: ตรวจไขมันในเลือด (Cholesterol, HDL) สำหรับอายุ 20-34 ปี
+    // *ไม่ได้รับสิทธิ์ตรวจไวรัสตับอักเสบบี (HBs Ag)* เนื่องจากผู้เกิดตั้งแต่ พ.ศ. 2535 ได้รับวัคซีนตั้งแต่แรกเกิดตามนโยบายกระทรวงสาธารณสุข
+    if (programGroup === "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี") {
+      ssoTests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL)", npo: true, isSso: true });
     }
   }
+  
+  // Merge estimated SSO tests (avoid duplicates)
+  let hasSsoItems = false;
+  ssoTests.forEach(ssoItem => {
+    let alreadyExists = false;
+    tests.forEach(t => {
+      if (t.name.toLowerCase().includes(ssoItem.name.toLowerCase()) || ssoItem.name.toLowerCase().includes(t.name.toLowerCase())) {
+        alreadyExists = true;
+      }
+    });
+    if (!alreadyExists) {
+      tests.push(ssoItem);
+      hasSsoItems = true;
+    }
+  });
   
   // Render the combined tests list
   tests.forEach((t, i) => {
@@ -511,11 +612,9 @@ function renderCheckupList(employee, isPregnant = false) {
     } else {
       let nameDisplay = t.name;
       if (t.isSso) {
-        // Append asterisk
         nameDisplay = `${t.name} *`;
       }
       
-      // Styling class
       if (t.isSso) {
         item.className = t.npo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
       } else {
@@ -534,10 +633,11 @@ function renderCheckupList(employee, isPregnant = false) {
     itemsList.appendChild(item);
   });
   
-  // Show / Hide the blue SSO note below checklist
+  // Show / Hide the blue SSO note below checklist in registration form
   const ssoNote = document.getElementById("checkup-list-note");
   if (ssoNote) {
-    ssoNote.style.display = useSso ? "block" : "none";
+    ssoNote.innerHTML = `<i class="fa-solid fa-circle-info"></i> * รายการสีน้ำเงินรอเช็คสิทธิ์ประกันสังคม หากเช็กแล้วยังไม่เคยใช้สิทธิ์จะสามารถใช้สิทธิ์ได้ (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)`;
+    ssoNote.style.display = hasSsoItems ? "block" : "none";
   }
   
   const nhsoNote = document.getElementById("checkup-nhso-note");
@@ -763,6 +863,11 @@ function selectTimeSlot(slotTime, buttonElement) {
 async function handleRegistrationSubmit(event) {
   event.preventDefault();
   
+  if (STATE.isRegistrationClosed) {
+    showToast("ระบบปิดรับลงทะเบียนและปรับเปลี่ยนรอบเวลาตรวจสุขภาพแล้วค่ะ หากต้องการแก้ไขกรุณาติดต่อฝ่ายบุคคล", "warning");
+    return;
+  }
+  
   if (!STATE.activeEmployee) {
     showToast("กรุณาค้นหารหัสพนักงานก่อน", "warning");
     return;
@@ -871,7 +976,11 @@ async function handleRegistrationSubmit(event) {
         const res = await callApi("saveRegistration", [payload]);
         if (res && res.success) {
           saved = true;
-          await loadConfigAndCounts();
+          // Invalidate and update client cache
+          CLIENT_CACHE.registrations[payload.employeeId] = payload;
+          try { sessionStorage.setItem(`reg_${payload.employeeId}`, JSON.stringify(payload)); } catch (e) {}
+          CLIENT_CACHE.configTimestamp = 0; // Force refresh slot counts on next load
+          await loadConfigAndCounts(true);
           hideLoader();
           showSuccessOverlay();
           resetForm();
@@ -919,10 +1028,27 @@ async function checkRegistrationStatus() {
     inputEl.value = empId;
   }
   
+  // 1. Check Fast Client-Side Cache (0ms Instant Status Display)
+  if (CONFIG.currentMode === "api") {
+    let cachedReg = CLIENT_CACHE.registrations[empId];
+    if (!cachedReg) {
+      try {
+        const stored = sessionStorage.getItem(`reg_${empId}`);
+        if (stored) {
+          cachedReg = JSON.parse(stored);
+          CLIENT_CACHE.registrations[empId] = cachedReg;
+        }
+      } catch (e) {}
+    }
+    if (cachedReg) {
+      renderStatusCard(cachedReg, empId);
+    }
+  }
+  
   showLoader("กำลังค้นหาข้อมูลการลงทะเบียน...");
   
   if (CONFIG.currentMode === "mock") {
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
     const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
     const foundReg = regs.find(r => r.employeeId === empId);
     if (foundReg) {
@@ -931,6 +1057,7 @@ async function checkRegistrationStatus() {
         foundReg.programGroup = emp.programGroup;
         foundReg.age = emp.age;
         foundReg.gender = emp.gender || "";
+        foundReg.ssoApprovedTests = emp.ssoApprovedTests || "";
       }
     }
     
@@ -941,6 +1068,10 @@ async function checkRegistrationStatus() {
       const res = await callApi("getRegistrationByEmpId", [empId]);
       if (res && res.success) {
         hideLoader();
+        if (res.data) {
+          CLIENT_CACHE.registrations[empId] = res.data;
+          try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(res.data)); } catch (e) {}
+        }
         renderStatusCard(res.data, empId);
       } else {
         throw new Error(res.error || "ดึงข้อมูลล้มเหลว");
@@ -984,70 +1115,41 @@ function renderStatusCard(reg, searchId) {
   
   document.getElementById("card-program-title").textContent = reg.programGroup;
   
-  // Render test items checklist exactly like main list
+  // Render test items checklist
   const checklistContainer = document.getElementById("card-tests-list-container");
   checklistContainer.innerHTML = "";
-  
-  const useSso = true; // Always display SSO items on ticket
   
   const programGroup = reg.programGroup;
   const baseTests = PROGRAM_TESTS[programGroup] || [];
   
-  // Clone base tests
+  // Clone base company tests
   let tests = baseTests.map(t => ({ ...t, isSso: false }));
   
-  const age = parseInt(reg.age || 0, 10);
-  const isFemale = reg.gender === "F" || reg.gender === "Female" || !!reg.isPregnant;
+  // Parse approved SSO tests from Column M (ssoApprovedTests)
+  const ssoRaw = reg.ssoApprovedTests || "";
+  let hasSsoItems = false;
   
-  if (useSso) {
-    // 3. FBS (age >= 35)
-    if (age >= 35) {
-      let hasFbs = false;
+  if (ssoRaw && ssoRaw.trim() !== "" && ssoRaw.trim() !== "-" && ssoRaw.trim() !== "ไม่มี") {
+    const ssoItems = ssoRaw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+    ssoItems.forEach(ssoItemName => {
+      let alreadyExists = false;
       tests.forEach(t => {
-        if (programGroup === "โปรแกรม MGR") return;
-        if (t.name.includes("FBS") || t.name.includes("น้ำตาล")) {
+        if (t.name.toLowerCase().includes(ssoItemName.toLowerCase()) || ssoItemName.toLowerCase().includes(t.name.toLowerCase())) {
           t.isSso = true;
-          hasFbs = true;
+          alreadyExists = true;
+          hasSsoItems = true;
         }
       });
-      if (!hasFbs && programGroup !== "โปรแกรม MGR") {
-        tests.push({ name: "ตรวจน้ำตาลในเลือด FBS (งดน้ำและอาหาร)", npo: true, isSso: true });
+      if (!alreadyExists) {
+        const isNpo = ssoItemName.includes("FBS") || ssoItemName.includes("น้ำตาล") || ssoItemName.includes("ไขมัน") || ssoItemName.includes("Cholesterol") || ssoItemName.includes("Triglyceride");
+        tests.push({
+          name: ssoItemName,
+          npo: isNpo,
+          isSso: true
+        });
+        hasSsoItems = true;
       }
-    }
-    
-    // 4. Kidney Cr (age >= 35)
-    if (age >= 35) {
-      let hasKidney = false;
-      tests.forEach(t => {
-        if (programGroup === "โปรแกรม MGR") return;
-        if (t.name.includes("Cr") || t.name.includes("ไต") || t.name.includes("BUN")) {
-          t.isSso = true;
-          hasKidney = true;
-        }
-      });
-      if (!hasKidney && programGroup !== "โปรแกรม MGR") {
-        tests.push({ name: "การทำงานของไต Cr และ eGFR", npo: false, isSso: true });
-      }
-    }
-    
-    // 5. Lipids
-    if (age >= 20 && age < 35) {
-      tests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL) (งดน้ำและอาหาร)", npo: true, isSso: true });
-    }
-    
-    // 6. HbsAg (age >= 35)
-    if (age >= 35) {
-      let hasHbs = false;
-      tests.forEach(t => {
-        if (t.name.includes("HbsAg") || t.name.includes("ตับอักเสบ")) {
-          t.isSso = true;
-          hasHbs = true;
-        }
-      });
-      if (!hasHbs) {
-        tests.push({ name: "เชื้อไวรัสตับอักเสบ HbsAg", npo: false, isSso: true });
-      }
-    }
+    });
   }
   
   tests.forEach((t, index) => {
@@ -1120,6 +1222,20 @@ function renderStatusCard(reg, searchId) {
     checklistContainer.appendChild(item);
   }
   
+  // Show verified / used SSO note on Ticket Card
+  const cardSsoVerifiedNote = document.getElementById("card-sso-verified-note");
+  if (cardSsoVerifiedNote) {
+    if (hasSsoItems) {
+      cardSsoVerifiedNote.className = "ticket-sso-verified-note sso-approved";
+      cardSsoVerifiedNote.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #0284c7;"></i> <span>* รายการสีน้ำเงินเป็นรายการตรวจหลังเช็คสิทธิ์ประกันสังคมแล้ว (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)</span>`;
+      cardSsoVerifiedNote.style.display = "flex";
+    } else {
+      cardSsoVerifiedNote.className = "ticket-sso-verified-note sso-used";
+      cardSsoVerifiedNote.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="color: #ea580c;"></i> <span>* สิทธิ์ตรวจสุขภาพประกันสังคมของท่านถูกใช้ไปแล้ว ดังนั้นท่านจะได้ตรวจโปรแกรมของบริษัทเท่านั้น</span>`;
+      cardSsoVerifiedNote.style.display = "flex";
+    }
+  }
+  
   const cardSsoSection = document.getElementById("card-sso-section");
   if (cardSsoSection) {
     cardSsoSection.style.display = "none";
@@ -1137,6 +1253,11 @@ function renderStatusCard(reg, searchId) {
 
 // --- Edit Booking Action ---
 function editRegistration() {
+  if (STATE.isRegistrationClosed) {
+    showToast("ระบบปิดรับการแก้ไขรอบเวลาและข้อมูลการลงทะเบียนแล้วค่ะ หากมีความจำเป็นต้องเปลี่ยนแปลงกรุณาติดต่อฝ่ายบุคคล", "warning");
+    return;
+  }
+
   if (!STATE.activeRegistration) return;
   
   const reg = STATE.activeRegistration;
@@ -1250,7 +1371,10 @@ async function cancelRegistration() {
         const res = await callApi("deleteRegistration", [reg.employeeId, trimmedReason]);
         if (res && res.success) {
           deleted = true;
-          await loadConfigAndCounts();
+          delete CLIENT_CACHE.registrations[reg.employeeId];
+          try { sessionStorage.removeItem(`reg_${reg.employeeId}`); } catch (e) {}
+          CLIENT_CACHE.configTimestamp = 0;
+          await loadConfigAndCounts(true);
           hideLoader();
           showToast("ยกเลิกการลงทะเบียนสำเร็จแล้วค่ะ", "success");
           
@@ -1363,43 +1487,97 @@ function closeSuccessOverlay() {
   document.getElementById("success-overlay").classList.remove("active");
 }
 
-async function callApi(action, args) {
+async function callApi(action, args = [], options = {}) {
   if (!CONFIG.apiUrl || CONFIG.apiUrl.includes("your_deployed_url")) {
     showToast("กรุณาติดตั้ง Web App URL ของ Google Sheets ในไฟล์ app.js ก่อน", "error");
     return { success: false, error: "API URL not configured" };
   }
   
-  try {
-    const payload = {
-      action: action,
-      args: args
-    };
+  const readActions = [
+    "getEmployeeAndRegistration",
+    "getConfigAndSlots",
+    "getEmployeeData",
+    "getRegistrationByEmpId",
+    "getAdminDashboardData",
+    "prewarmCache"
+  ];
+  
+  const isRead = readActions.includes(action);
+  const timeoutMs = options.timeout || 15000;
+  const maxRetries = options.retries !== undefined ? options.retries : 2;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
-    const response = await fetch(CONFIG.apiUrl, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(payload)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      let response;
+      if (isRead) {
+        // High-Speed HTTP GET for Read Operations (Skips CORS preflight & Apps Script redirection bottlenecks)
+        const params = new URLSearchParams();
+        params.append("action", action);
+        if (args && args.length > 0) {
+          params.append("args", JSON.stringify(args));
+        }
+        
+        response = await fetch(`${CONFIG.apiUrl}?${params.toString()}`, {
+          method: "GET",
+          mode: "cors",
+          signal: controller.signal
+        });
+      } else {
+        // HTTP POST for State Modifications
+        const payload = {
+          action: action,
+          args: args
+        };
+        
+        response = await fetch(CONFIG.apiUrl, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+      }
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const isLastAttempt = attempt === maxRetries;
+      
+      if (err.name === 'AbortError') {
+        console.warn(`API call timeout (${timeoutMs}ms) for action: ${action}, attempt: ${attempt + 1}`);
+        if (isLastAttempt) {
+          throw new Error("การเชื่อมต่อไปยัง Google Sheets หมดเวลา (Timeout) กรุณาลองใหม่อีกครั้ง");
+        }
+      } else {
+        console.warn(`API call error on attempt ${attempt + 1} for action ${action}:`, err);
+        if (isLastAttempt) {
+          throw err;
+        }
+      }
+      
+      // Exponential backoff with random jitter before retry: 400ms - 1200ms
+      const delay = Math.floor(Math.pow(2, attempt) * 400 + Math.random() * 300);
+      await new Promise(res => setTimeout(res, delay));
     }
-    
-    const result = await response.json();
-    return result;
-  } catch (err) {
-    console.error("API Call error:", err);
-    throw err;
   }
 }
 
 // --- Real-time Synchronisation Manager ---
 const SYNC_CONFIG = {
-  minIntervalMs: 6000,
-  maxIntervalMs: 9000,
+  minIntervalMs: 25000, // 25s - prevents flooding GAS from 1000+ users
+  maxIntervalMs: 40000, // 40s with random jitter
   timerId: null,
   isSyncing: false
 };
@@ -1663,7 +1841,9 @@ async function loadAdminDashboardData() {
     if (CONFIG.currentMode === "mock") {
       await new Promise(resolve => setTimeout(resolve, 600));
       const eligibleEmployees = MOCK_EMPLOYEES.filter(emp => {
-        return !(emp.checkupRight && emp.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1);
+        const hasNoRight = emp.checkupRight && emp.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1;
+        const hasRemark = emp.remark && emp.remark.trim() !== "";
+        return !hasNoRight && !hasRemark;
       });
       const registrations = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
       
@@ -1672,16 +1852,19 @@ async function loadAdminDashboardData() {
         registrations: registrations
       };
       STATE.allowCancellation = localStorage.getItem("ALLOW_CANCELLATION") === "true";
+      STATE.isRegistrationClosed = localStorage.getItem("IS_REGISTRATION_CLOSED") === "true";
     } else {
       const res = await callApi("getAdminDashboardData", []);
       if (res && res.success) {
         STATE.adminDashboardData = res.data;
         STATE.allowCancellation = !!res.data.allowCancellation;
+        STATE.isRegistrationClosed = !!res.data.isRegistrationClosed;
       } else {
         throw new Error(res.error || "ไม่สามารถดึงข้อมูลแดชบอร์ดได้");
       }
     }
     renderAdminDashboard();
+    updateRegistrationClosedUI();
   } catch (err) {
     console.error(err);
     showToast(`ดึงข้อมูลแดชบอร์ดล้มเหลว: ${err.message}`, "error");
@@ -1706,10 +1889,15 @@ function renderAdminDashboard() {
   document.getElementById("stat-unregistered-emp").textContent = unregisteredCount;
   document.getElementById("stat-percent-emp").textContent = `${percentage}%`;
   
-  // Set the checkbox state
-  const checkbox = document.getElementById("admin-allow-cancel-toggle");
-  if (checkbox) {
-    checkbox.checked = !!STATE.allowCancellation;
+  // Set the checkbox states
+  const cancelCheckbox = document.getElementById("admin-allow-cancel-toggle");
+  if (cancelCheckbox) {
+    cancelCheckbox.checked = !!STATE.allowCancellation;
+  }
+
+  const closedCheckbox = document.getElementById("admin-reg-closed-toggle");
+  if (closedCheckbox) {
+    closedCheckbox.checked = !!STATE.isRegistrationClosed;
   }
   
   // Populate dates select filter for slots table
@@ -1915,7 +2103,11 @@ function copyReminderBulk() {
 }
 
 async function triggerAutoAllocation() {
-  const confirmResult = confirm("หากยืนยัน ระบบจะดำเนินการจัดสรร วันตรวจ และรอบเวลาตรวจ ที่ยังมีที่นั่งว่างอยู่ ให้กับพนักงานทุกคนที่ยังไม่ได้ลงทะเบียนโดยอัตโนมัติ (โดยจะยกเว้นไม่จัดสรรรอบให้ผู้ที่มีหมายเหตุ ลาออก, ลาคลอด, ลาป่วย, หรืออยู่เกาะกง)\n\nคุณแอดมินยืนยันที่จะดำเนินการจัดสรรรอบอัตโนมัติหรือไม่?");
+  const confirmResult = confirm(
+    "หากยืนยัน ระบบจะดำเนินการจัดสรร วันตรวจ และรอบเวลาตรวจ ที่ยังมีที่นั่งว่างอยู่ ให้กับพนักงานทุกคนที่ยังไม่ได้ลงทะเบียนโดยอัตโนมัติ (โดยจะยกเว้นผู้ที่มีหมายเหตุ เช่น ลาออก, ลาป่วยยาว, อยู่ Hana เกาะกง)\n\n" +
+    "🔒 และหลังจากจัดสรรเสร็จสิ้น ระบบจะทำการปิดรับการลงทะเบียนและแก้ไขรอบเวลาโดยอัตโนมัติทันที เพื่อป้องกันไม่ให้พนักงานเข้ามาแก้ไขรอบเวลาตรวจ\n\n" +
+    "คุณแอดมินยืนยันที่จะดำเนินการหรือไม่?"
+  );
   if (!confirmResult) return;
   
   showLoader("กำลังจัดสรรรอบตรวจสุขภาพอัตโนมัติ...");
@@ -1926,22 +2118,24 @@ async function triggerAutoAllocation() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       // Simulate auto-allocation using mock data
       const regs = JSON.parse(localStorage.getItem("MOCK_REGISTRATIONS") || "[]");
-      const unregistered = MOCK_EMPLOYEES.filter(emp => 
-        emp.checkupRight !== "ไม่มีสิทธิ์" &&
-        !regs.some(r => r.employeeId === emp.employeeId)
-      );
+      const unregistered = MOCK_EMPLOYEES.filter(emp => {
+        const hasNoRight = emp.checkupRight && emp.checkupRight.indexOf("ไม่มีสิทธิ์") !== -1;
+        const hasRemark = emp.remark && emp.remark.trim() !== "";
+        const isAlreadyReg = regs.some(r => r.employeeId === emp.employeeId);
+        return !hasNoRight && !hasRemark && !isAlreadyReg;
+      });
+      
+      const remarkedEmps = MOCK_EMPLOYEES.filter(emp => {
+        const hasRemark = emp.remark && emp.remark.trim() !== "";
+        const isAlreadyReg = regs.some(r => r.employeeId === emp.employeeId);
+        return hasRemark && !isAlreadyReg;
+      });
       
       let successCount = 0;
-      let skipCount = 0;
+      let skipCount = remarkedEmps.length;
       let noSlotCount = 0;
       
       unregistered.forEach(emp => {
-        // Mock skip logic: skip "อดิเรก" (006078) to simulate remark skip check
-        if (emp.employeeId === "006078") {
-          skipCount++;
-          return;
-        }
-        
         successCount++;
         // Add mock registration
         regs.push({
@@ -1963,16 +2157,21 @@ async function triggerAutoAllocation() {
       });
       
       localStorage.setItem("MOCK_REGISTRATIONS", JSON.stringify(regs));
+      localStorage.setItem("IS_REGISTRATION_CLOSED", "true");
+      STATE.isRegistrationClosed = true;
+      
       result = {
         success: true,
         successCount: successCount,
         skipCount: skipCount,
-        noSlotCount: noSlotCount
+        noSlotCount: noSlotCount,
+        isRegistrationClosed: true
       };
     } else {
       const res = await callApi("autoAllocateRemainingEmployees");
       if (res && res.success) {
         result = res.data;
+        STATE.isRegistrationClosed = true;
       } else {
         throw new Error((res && res.error) || "เกิดข้อผิดพลาดในการจัดสรรรอบตรวจ");
       }
@@ -1980,8 +2179,11 @@ async function triggerAutoAllocation() {
     
     hideLoader();
     
+    // Update closed state UI immediately
+    updateRegistrationClosedUI();
+    
     // Show summary alert
-    alert(`🎉 ระบบจัดสรรรอบเวลาอัตโนมัติเสร็จสิ้น!\n\n- จัดสรรรอบสำเร็จ: ${result.successCount} ท่าน\n- ข้าม (มีหมายเหตุ ลาออก/คลอด/ป่วย/เกาะกง): ${result.skipCount} ท่าน\n- พนักงานที่รอบเต็มไม่มีให้จัดสรร: ${result.noSlotCount} ท่าน\n\nระบบจะทำการโหลดข้อมูลแผงควบคุมใหม่ในทันที`);
+    alert(`🎉 ระบบจัดสรรรอบเวลาอัตโนมัติเสร็จสิ้น!\n\n- จัดสรรรอบสำเร็จ: ${result.successCount} ท่าน\n- ข้าม (มีหมายเหตุ ลาออก/ลาป่วยยาว/เกาะกง/คลอด): ${result.skipCount} ท่าน\n- พนักงานที่รอบเต็มไม่มีให้จัดสรร: ${result.noSlotCount} ท่าน\n\n🔒 ระบบได้ทำการปิดรับการลงทะเบียนและแก้ไขรอบเวลาสำหรับพนักงานโดยอัตโนมัติเรียบร้อยแล้วค่ะ`);
     
     // Reload admin statistics
     await loadAdminDashboardData();
@@ -1990,6 +2192,40 @@ async function triggerAutoAllocation() {
     console.error(err);
     hideLoader();
     showToast(`เกิดข้อผิดพลาด: ${err.message}`, "error");
+  }
+}
+
+/**
+ * Toggle registration closed setting from Admin Panel
+ */
+async function toggleRegClosedSetting(checked) {
+  if (CONFIG.currentMode === "mock") {
+    localStorage.setItem("IS_REGISTRATION_CLOSED", checked ? "true" : "false");
+    STATE.isRegistrationClosed = checked;
+    showToast(checked ? "🔒 ปิดรับการลงทะเบียนและแก้ไขรอบเวลาแล้ว" : "🔓 เปิดรับการลงทะเบียนเรียบร้อยแล้ว", "success");
+    updateRegistrationClosedUI();
+  } else {
+    showLoader("กำลังอัปเดตการตั้งค่าระบบลงทะเบียน...");
+    try {
+      const res = await callApi("saveSetting", ["is_registration_closed", checked ? "TRUE" : "FALSE"]);
+      if (res && res.success) {
+        STATE.isRegistrationClosed = checked;
+        showToast(checked ? "🔒 ปิดรับการลงทะเบียนและแก้ไขรอบเวลาแล้ว" : "🔓 เปิดรับการลงทะเบียนเรียบร้อยแล้ว", "success");
+        updateRegistrationClosedUI();
+      } else {
+        throw new Error(res.error || "บันทึกข้อมูลล้มเหลว");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(`มีข้อผิดพลาด: ${err.message}`, "error");
+      // Revert checkbox state
+      const checkbox = document.getElementById("admin-reg-closed-toggle");
+      if (checkbox) {
+        checkbox.checked = STATE.isRegistrationClosed;
+      }
+    } finally {
+      hideLoader();
+    }
   }
 }
 
@@ -2035,6 +2271,28 @@ async function toggleCancelButtonSetting(checked) {
   }
 }
 
-
-
-
+/**
+ * Prewarm GAS in-memory cache from Admin Dashboard
+ */
+async function triggerPrewarmCache() {
+  if (CONFIG.currentMode === "mock") {
+    showToast("ระบบออฟไลน์ (Mock) ข้อมูลพร้อมใช้งานทันทีอยู่แล้วค่ะ", "info");
+    return;
+  }
+  
+  showLoader("กำลังวอร์มแคชความเร็วสูง (Prewarming Cache)...");
+  try {
+    const res = await callApi("prewarmCache", []);
+    hideLoader();
+    if (res && res.success) {
+      const count = (res.data && res.data.cachedCount) || "ทั้งหมด";
+      showToast(`⚡ วอร์มแคชสำเร็จ! โหลดข้อมูลพนักงาน ${count} รายการเข้าสู่ RAM ของระบบแล้ว พนักงานทุกคนจะค้นหาได้ใน 0.2 วินาที`, "success");
+    } else {
+      throw new Error((res && res.error) || "วอร์มแคชไม่สำเร็จ");
+    }
+  } catch (err) {
+    hideLoader();
+    console.error(err);
+    showToast(`วอร์มแคชล้มเหลว: ${err.message}`, "error");
+  }
+}
