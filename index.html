@@ -70,6 +70,33 @@
     <!-- TAB 1: REGISTRATION -->
     <div class="tab-content active" id="tab-register">
       
+      <!-- Registration Closed Box (Shown when admin closes registration or runs auto-allocation) -->
+      <div id="registration-closed-box" class="registration-closed-card" style="display: none;">
+        <div class="closed-icon-wrap">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div class="closed-badge">
+          <i class="fa-solid fa-shield-halved"></i> ปิดรับลงทะเบียนและแก้ไขรอบเวลาแล้ว
+        </div>
+        <h2 class="closed-title">ระบบปิดรับลงทะเบียนตรวจสุขภาพประจำปี 2569</h2>
+        <p class="closed-desc">
+          ฝ่ายบุคคล (HRD) ได้ดำเนินการจัดสรรวันและรอบเวลาตรวจสุขภาพให้กับพนักงานทุกคนเรียบร้อยแล้ว<br>
+          เพื่อความเรียบร้อยและป้องกันข้อผิดพลาด ระบบจึงได้ทำการปิดรับการลงทะเบียนและปิดกั้นการแก้ไขรอบเวลา
+        </p>
+        
+        <div class="closed-action-box">
+          <p class="closed-action-hint">พนักงานสามารถตรวจสอบวัน เวลา สถานที่ตรวจสุขภาพ หรือพิมพ์บัตรตรวจสุขภาพได้ที่นี่:</p>
+          <button type="button" class="btn-goto-status" onclick="switchTab('status')">
+            <i class="fa-solid fa-address-card"></i> ไปที่หน้าตรวจสอบผลการลงทะเบียน
+          </button>
+        </div>
+        
+        <div class="closed-footer-note">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>กรณีมีความจำเป็นต้องขอสลับรอบเวลาตรวจสุขภาพเป็นกรณีพิเศษ โปรดติดต่อเจ้าหน้าที่ฝ่ายบุคคล (HRD)</span>
+        </div>
+      </div>
+
       <form id="health-registration-form" onsubmit="handleRegistrationSubmit(event)" autocomplete="off">
         
         <div class="section-title">
@@ -340,6 +367,9 @@
               </h4>
               <div class="ticket-tests-columns" id="card-tests-list-container">
                 <!-- Checkup items checklist rendered dynamically -->
+              </div>
+              <div class="ticket-sso-verified-note" id="card-sso-verified-note" style="display: none; margin-top: 12px; font-size: 0.85rem; color: #0369a1; font-weight: 500; padding: 8px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+                <i class="fa-solid fa-circle-check" style="color: #0284c7;"></i> * รายการสีน้ำเงินเป็นรายการตรวจหลังเช็คสิทธิ์ประกันสังคมแล้ว (กรุณานำบัตรประชาชนตัวจริงมาในวันตรวจ)
               </div>
             </div>
             
@@ -662,23 +692,48 @@
         </div>
 
         <!-- Admin Settings Control Box -->
-        <div class="admin-settings-box" style="margin-bottom: 24px; padding: 16px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="background: #e0f2fe; color: #0284c7; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-              <i class="fa-solid fa-sliders"></i>
+        <div class="admin-settings-container" style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+          
+          <!-- Setting 1: Close Registration Toggle -->
+          <div class="admin-setting-card" style="padding: 16px 20px; background: #fff5f5; border: 1.5px solid #fed7d7; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: #fee2e2; color: #dc2626; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <div>
+                <h4 style="margin: 0; font-size: 0.95rem; color: #991b1b; font-weight: 700;">ปิดรับลงทะเบียนและแก้ไขรอบเวลา</h4>
+                <p style="margin: 2px 0 0; font-size: 0.8rem; color: #7f1d1d;">ปิดหน้าลงทะเบียนไม่ให้พนักงานแก้ไขรอบตรวจ</p>
+              </div>
             </div>
             <div>
-              <h4 style="margin: 0; font-size: 0.95rem; color: #1e293b; font-weight: 700;">การตั้งค่าสิทธิ์พนักงาน</h4>
-              <p style="margin: 2px 0 0; font-size: 0.8rem; color: #64748b;">เปิดหรือปิดการแสดงปุ่มยกเลิกการลงทะเบียนสำหรับพนักงาน</p>
+              <label class="switch-container">
+                <input type="checkbox" id="admin-reg-closed-toggle" class="switch-input danger-switch" onchange="toggleRegClosedSetting(this.checked)">
+                <span class="switch-slider danger"></span>
+                <span style="font-size: 0.88rem; font-weight: 600; color: #991b1b;">ปิดรับลงทะเบียน</span>
+              </label>
             </div>
           </div>
-          <div>
-            <label class="switch-container">
-              <input type="checkbox" id="admin-allow-cancel-toggle" class="switch-input" onchange="toggleCancelButtonSetting(this.checked)">
-              <span class="switch-slider"></span>
-              <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">อนุญาตให้พนักงานยกเลิกการจองได้</span>
-            </label>
+
+          <!-- Setting 2: Allow Cancellation Toggle -->
+          <div class="admin-setting-card" style="padding: 16px 20px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: #e0f2fe; color: #0284c7; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                <i class="fa-solid fa-sliders"></i>
+              </div>
+              <div>
+                <h4 style="margin: 0; font-size: 0.95rem; color: #1e293b; font-weight: 700;">สิทธิ์ยกเลิกการลงทะเบียน</h4>
+                <p style="margin: 2px 0 0; font-size: 0.8rem; color: #64748b;">เปิดหรือปิดการแสดงปุ่มยกเลิกการลงทะเบียน</p>
+              </div>
+            </div>
+            <div>
+              <label class="switch-container">
+                <input type="checkbox" id="admin-allow-cancel-toggle" class="switch-input" onchange="toggleCancelButtonSetting(this.checked)">
+                <span class="switch-slider"></span>
+                <span style="font-size: 0.88rem; font-weight: 600; color: #334155;">อนุญาตให้ยกเลิกได้</span>
+              </label>
+            </div>
           </div>
+
         </div>
 
         <!-- Metrics Cards -->
@@ -776,7 +831,10 @@
                 <i class="fa-solid fa-copy"></i> ก๊อบปี้ข้อความเตือนของแผนกที่เลือก
               </button>
               <button type="button" class="btn-auto-allocate" id="btn-admin-auto-allocate" onclick="triggerAutoAllocation()">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> จัดรอบตรวจอัตโนมัติ (ยกเว้น ลาออก/คลอด/ป่วย/เกาะกง)
+                <i class="fa-solid fa-wand-magic-sparkles"></i> ลงทะเบียน Auto (จัดรอบอัตโนมัติ & ปิดรับลงทะเบียน)
+              </button>
+              <button type="button" class="btn-prewarm-cache" id="btn-admin-prewarm-cache" onclick="triggerPrewarmCache()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);">
+                <i class="fa-solid fa-bolt"></i> วอร์มแคชความเร็วสูง (Prewarm Cache)
               </button>
             </div>
           </div>
