@@ -36,8 +36,8 @@ const CLIENT_CACHE = {
 
 // --- Special Self-Pay Test Catalog Data (34 items) ---
 const SPECIAL_TESTS = [
-  { id: 1, name: "น้ำตาลในเลือด (FBS)", price: 30, fasting: true, category: "blood", icon: '<i class="fa-solid fa-droplet" style="color: #ef4444;"></i>', notes: "สิทธิประกันสังคมพนักงานอายุ 35 ปีขึ้นไปฟรี (กรณีไม่เคยใช้สิทธิ์ตรวจของประกันสังคมในปีนี้) | *งดน้ำงดอาหาร 8-12 ชั่วโมง*" },
-  { id: 2, name: "ตรวจหาระดับไขมันในเลือด (Cholesterol, Triglyceride, HDL, LDL)", price: 142, fasting: true, category: "blood", icon: '<i class="fa-solid fa-flask" style="color: #f59e0b;"></i>', notes: "งดน้ำงดอาหาร 8-12 ชั่วโมง | ฟรี สำหรับพนักงานอายุ 35 ปีขึ้นไป (พนักงานอายุไม่ถึง 35 ปี ตรวจเฉพาะ Cholesterol, HDL ฟรี กรณีไม่เคยใช้สิทธิ์ใน 3 ปีที่ผ่านมา)" },
+  { id: 1, name: "น้ำตาลในเลือด (FBS)", price: 30, fasting: true, category: "blood", icon: '<i class="fa-solid fa-droplet" style="color: #ef4444;"></i>', notes: "สิทธิประกันสังคมพนักงานอายุ 35 ปีขึ้นไปฟรี (กรณีไม่เคยใช้สิทธิ์ตรวจของประกันสังคมในปีนี้) | *งดอาหารและเครื่องดื่ม 8-12 ชั่วโมง (ดื่มน้ำเปล่าได้)*" },
+  { id: 2, name: "ตรวจหาระดับไขมันในเลือด (Cholesterol, Triglyceride, HDL, LDL)", price: 142, fasting: true, category: "blood", icon: '<i class="fa-solid fa-flask" style="color: #f59e0b;"></i>', notes: "งดอาหารและเครื่องดื่ม 8-12 ชั่วโมง (ดื่มน้ำเปล่าได้) | ฟรี สำหรับพนักงานอายุ 35 ปีขึ้นไป (พนักงานอายุไม่ถึง 35 ปี ตรวจเฉพาะ Cholesterol, HDL ฟรี ไม่จำเป็นต้องงดอาหารและเครื่องดื่ม)" },
   { id: 3, name: "ตรวจสมรรถภาพการทำงานของตับ (SGO, SGPT, ALK)", price: 150, fasting: false, category: "blood", icon: '<i class="fa-solid fa-heart-pulse" style="color: #10b981;"></i>', notes: "ดูความผิดปกติของตับ ที่อาจทำให้เป็นโรคตับอักเสบ หรือโรคมะเร็งตับ" },
   { id: 4, name: "ตรวจการทำงานของไต (BUN, Creatinine)", price: 60, fasting: false, category: "blood", icon: '<i class="fa-solid fa-stethoscope" style="color: #06b6d4;"></i>', notes: "ตรวจสอบการทำงานของไตว่าทำงานปกติหรือไม่" },
   { id: 5, name: "ตรวจภาวะไทรอยด์ (TFT = FT3, FT4, TSH)", price: 400, fasting: false, category: "blood", icon: '<i class="fa-solid fa-dna" style="color: #8b5cf6;"></i>', notes: "ควบคุมการเผาผลาญ บ่งบอกต่อมไทรอยด์ทำงานผิดปกติหรือไม่" },
@@ -548,6 +548,27 @@ function handleEmployeeLookupResult(employee, registration = null) {
   validateFormCompletion();
 }
 
+// --- Helper function to determine test fasting requirement ---
+function getTestFastingInfo(testName, defaultNpo = false) {
+  const lower = (testName || "").toLowerCase();
+  
+  // 2-Lipid test (Total Cholesterol & HDL only, without TG / Triglyceride): NO fasting required
+  const hasCholOrHdl = lower.includes("cholesterol") || lower.includes("hdl") || lower.includes("total cholesterol");
+  const hasTriglyceride = lower.includes("triglyceride") || lower.includes("tg");
+  const hasFbs = lower.includes("fbs") || lower.includes("น้ำตาล");
+  
+  if (hasCholOrHdl && !hasTriglyceride && !hasFbs) {
+    return { isNpo: false, is2Lipids: true, note: "ไม่จำเป็นต้องงดน้ำและอาหาร" };
+  }
+  
+  // 4-Lipid test (with TG) or FBS: Fasting required (งดอาหารและเครื่องดื่ม, plain water ok)
+  if (defaultNpo || hasTriglyceride || hasFbs || (lower.includes("ไขมัน") && !hasCholOrHdl)) {
+    return { isNpo: true, is2Lipids: false, note: "งดอาหารและเครื่องดื่ม" };
+  }
+  
+  return { isNpo: false, is2Lipids: false, note: "" };
+}
+
 // --- Render checkup list dynamically ---
 function renderCheckupList(employee, isPregnant = false) {
   const itemsList = document.getElementById("checkup-items-list");
@@ -576,9 +597,9 @@ function renderCheckupList(employee, isPregnant = false) {
   } else {
     // For age under 35 (โปรแกรมที่ 2 อายุไม่ถึง 35 ปี / เกิดตั้งแต่ พ.ศ. 2535 เป็นต้นไป):
     // สิทธิ์ประกันสังคม: ตรวจไขมันในเลือด (Cholesterol, HDL) สำหรับอายุ 20-34 ปี
-    // *ไม่ได้รับสิทธิ์ตรวจไวรัสตับอักเสบบี (HBs Ag)* เนื่องจากผู้เกิดตั้งแต่ พ.ศ. 2535 ได้รับวัคซีนตั้งแต่แรกเกิดตามนโยบายกระทรวงสาธารณสุข
+    // *ไม่จำเป็นต้องงดน้ำและอาหาร* (ตัวที่ต้องงดคือ Triglyceride ซึ่งมีในกลุ่ม 35 ปีขึ้นไป / MGR)
     if (programGroup === "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี") {
-      ssoTests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL)", npo: true, isSso: true });
+      ssoTests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL)", npo: false, is2Lipids: true, isSso: true });
     }
   }
   
@@ -615,14 +636,21 @@ function renderCheckupList(employee, isPregnant = false) {
         nameDisplay = `${t.name} *`;
       }
       
+      const fastingInfo = getTestFastingInfo(t.name, t.npo);
+      
       if (t.isSso) {
-        item.className = t.npo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
+        item.className = fastingInfo.isNpo ? "checkup-item npo sso-merged-item" : "checkup-item sso-merged-item";
       } else {
-        item.className = t.npo ? "checkup-item npo" : "checkup-item";
+        item.className = fastingInfo.isNpo ? "checkup-item npo" : "checkup-item";
       }
       
-      let iconClass = t.npo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
-      let extraSpan = t.npo ? `<span class="npo-badge">งดน้ำ-งดอาหาร</span>` : "";
+      let iconClass = fastingInfo.isNpo ? "fa-solid fa-triangle-exclamation" : "fa-solid fa-circle-check";
+      let extraSpan = "";
+      if (fastingInfo.isNpo) {
+        extraSpan = `<span class="npo-badge">งดอาหาร-เครื่องดื่ม</span>`;
+      } else if (fastingInfo.is2Lipids || t.is2Lipids) {
+        extraSpan = `<span class="no-npo-badge">ไม่จำเป็นต้องงดน้ำและอาหาร</span>`;
+      }
       
       item.innerHTML = `
         <i class="${iconClass}"></i>
@@ -1042,6 +1070,7 @@ async function checkRegistrationStatus() {
     }
     if (cachedReg) {
       renderStatusCard(cachedReg, empId);
+      return; // Instant 0ms load!
     }
   }
   
@@ -1065,16 +1094,40 @@ async function checkRegistrationStatus() {
     renderStatusCard(foundReg, empId);
   } else {
     try {
-      const res = await callApi("getRegistrationByEmpId", [empId]);
-      if (res && res.success) {
+      let res = null;
+      try {
+        res = await callApi("getEmployeeAndRegistration", [empId]);
+      } catch (e) {
+        console.warn("getEmployeeAndRegistration call failed, trying getRegistrationByEmpId fallback:", e);
+      }
+      
+      if (res && res.success && res.data) {
         hideLoader();
-        if (res.data) {
-          CLIENT_CACHE.registrations[empId] = res.data;
-          try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(res.data)); } catch (e) {}
+        const emp = res.data.employee;
+        const reg = res.data.registration;
+        
+        if (emp) {
+          CLIENT_CACHE.employees[empId] = emp;
+          try { sessionStorage.setItem(`emp_${empId}`, JSON.stringify(emp)); } catch (e) {}
         }
-        renderStatusCard(res.data, empId);
+        if (reg) {
+          CLIENT_CACHE.registrations[empId] = reg;
+          try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(reg)); } catch (e) {}
+        }
+        renderStatusCard(reg, empId);
       } else {
-        throw new Error(res.error || "ดึงข้อมูลล้มเหลว");
+        // Fallback to getRegistrationByEmpId
+        const fallbackRes = await callApi("getRegistrationByEmpId", [empId]);
+        hideLoader();
+        if (fallbackRes && fallbackRes.success) {
+          if (fallbackRes.data) {
+            CLIENT_CACHE.registrations[empId] = fallbackRes.data;
+            try { sessionStorage.setItem(`reg_${empId}`, JSON.stringify(fallbackRes.data)); } catch (e) {}
+          }
+          renderStatusCard(fallbackRes.data, empId);
+        } else {
+          throw new Error((fallbackRes && fallbackRes.error) || "ดึงข้อมูลล้มเหลว");
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1141,10 +1194,11 @@ function renderStatusCard(reg, searchId) {
         }
       });
       if (!alreadyExists) {
-        const isNpo = ssoItemName.includes("FBS") || ssoItemName.includes("น้ำตาล") || ssoItemName.includes("ไขมัน") || ssoItemName.includes("Cholesterol") || ssoItemName.includes("Triglyceride");
+        const fastingInfo = getTestFastingInfo(ssoItemName, false);
         tests.push({
           name: ssoItemName,
-          npo: isNpo,
+          npo: fastingInfo.isNpo,
+          is2Lipids: fastingInfo.is2Lipids,
           isSso: true
         });
         hasSsoItems = true;
@@ -1171,11 +1225,17 @@ function renderStatusCard(reg, searchId) {
         item.className = "ticket-test-item";
       }
       
-      // Add extra text for NPO fasting items
+      // Add extra text for fasting items vs 2-lipid items
       let testNameDisplay = `${index + 1}. ${nameDisplay}`;
-      if (t.npo) {
-        if (!testNameDisplay.includes("งดน้ำ") && !testNameDisplay.includes("งดอาหาร")) {
-          testNameDisplay += " *งดน้ำงดอาหาร*";
+      const fastingInfo = getTestFastingInfo(t.name, t.npo);
+      
+      if (fastingInfo.isNpo) {
+        if (!testNameDisplay.includes("งดอาหาร") && !testNameDisplay.includes("งดเครื่องดื่ม") && !testNameDisplay.includes("งดน้ำ")) {
+          testNameDisplay += " *งดอาหารและเครื่องดื่ม*";
+        }
+      } else if (fastingInfo.is2Lipids || t.is2Lipids) {
+        if (!testNameDisplay.includes("ไม่จำเป็นต้องงด")) {
+          testNameDisplay += " *ไม่จำเป็นต้องงดน้ำและอาหาร*";
         }
       }
       
@@ -1210,8 +1270,8 @@ function renderStatusCard(reg, searchId) {
     }
   }
   
-  // Append Selected Cancer Checkup if manager
-  if (reg.programGroup === "โปรแกรม MGR" && reg.cancerTest) {
+  // Append Selected Cancer Checkup if manager or cancerTest has value
+  if (reg.cancerTest && reg.cancerTest.trim() !== "" && reg.cancerTest.trim() !== "-" && reg.cancerTest.trim() !== "ไม่มี") {
     const item = document.createElement("div");
     item.className = "ticket-test-item cancer-gold";
     const cancerIdx = tests.length + 1;
@@ -1724,7 +1784,7 @@ function renderSpecialCatalogTable() {
       badgesHtml += `<span class="catalog-badge-tag new-item"><i class="fa-solid fa-sparkles"></i> รายการใหม่</span>`;
     }
     if (item.fasting) {
-      badgesHtml += `<span class="catalog-badge-tag fasting"><i class="fa-solid fa-utensils"></i> งดน้ำ-อาหาร 8-12 ชม.</span>`;
+      badgesHtml += `<span class="catalog-badge-tag fasting"><i class="fa-solid fa-utensils"></i> งดอาหาร-เครื่องดื่ม 8-12 ชม.</span>`;
     }
     if (item.welfare) {
       badgesHtml += `<span class="catalog-badge-tag welfare"><i class="fa-solid fa-gift"></i> สวัสดิการ 50%</span>`;
