@@ -43,21 +43,21 @@
 
     <!-- Welcome Alert Card -->
     <div class="welcome-card" id="welcome-card-banner">
-      <div class="welcome-icon"><i class="fa-solid fa-user-check"></i></div>
+      <div class="welcome-icon"><i class="fa-solid fa-address-card"></i></div>
       <div class="welcome-text">
-        <h3>ยินดีต้อนรับสู่ระบบลงทะเบียนตรวจสุขภาพพนักงาน</h3>
-        <p>กรุณากรอกรหัสพนักงานเพื่อดูโปรแกรมตรวจสุขภาพเฉพาะบุคคล เลือกกะการทำงาน สถานที่ และรอบเวลาที่สะดวก</p>
-        <p>หากครบกำหนดเวลาที่ให้ลงทะเบียนแล้ว เจ้าหน้าที่จะขอจัดรอบตรวจสุขภาพให้พนักงานที่ยังไม่ได้ลงทะเบียนอัตโนมัติ</p>
+        <h3 id="welcome-banner-title">ระบบตรวจสอบผลการลงทะเบียนตรวจสุขภาพประจำปี 2569</h3>
+        <p id="welcome-banner-desc">ขณะนี้ระบบได้ปิดรับการลงทะเบียนและฝ่ายบุคคลได้จัดสรรรอบเวลาตรวจสุขภาพให้พนักงานทุกคนเรียบร้อยแล้วค่ะ</p>
+        <p>กรุณากรอกรหัสพนักงานเพื่อดูรายละเอียดรอบเวลาตรวจสุขภาพ รายการตรวจเฉพาะบุคคล และพิมพ์บัตรตรวจสุขภาพ (Ticket Pass)</p>
       </div>
     </div>
 
     <!-- Navigation Tabs -->
     <nav class="nav-tabs">
-      <button class="tab-btn active" id="tab-btn-register" onclick="switchTab('register')">
-        <i class="fa-solid fa-file-medical"></i> ลงทะเบียนตรวจสุขภาพ
-      </button>
-      <button class="tab-btn" id="tab-btn-status" onclick="switchTab('status')">
+      <button class="tab-btn active" id="tab-btn-status" onclick="switchTab('status')">
         <i class="fa-solid fa-address-card"></i> ตรวจสอบผลการลงทะเบียน
+      </button>
+      <button class="tab-btn" id="tab-btn-register" onclick="switchTab('register')">
+        <i class="fa-solid fa-file-medical"></i> ลงทะเบียนตรวจสุขภาพ
       </button>
       <button class="tab-btn" id="tab-btn-special-catalog" onclick="switchTab('special-catalog')">
         <i class="fa-solid fa-notes-medical"></i> รายการตรวจพิเศษ (ชำระเอง)
@@ -68,7 +68,7 @@
     </nav>
 
     <!-- TAB 1: REGISTRATION -->
-    <div class="tab-content active" id="tab-register">
+    <div class="tab-content" id="tab-register">
       
       <!-- Registration Closed Box (Shown when admin closes registration or runs auto-allocation) -->
       <div id="registration-closed-box" class="registration-closed-card" style="display: none;">
@@ -290,7 +290,7 @@
     </div>
 
     <!-- TAB 2: CHECK REGISTRATION STATUS -->
-    <div class="tab-content" id="tab-status">
+    <div class="tab-content active" id="tab-status">
       
       <div class="status-search-card no-print">
         <h2><i class="fa-solid fa-search"></i> ค้นหาผลการลงทะเบียนของคุณ</h2>
