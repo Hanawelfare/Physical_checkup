@@ -168,6 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
   initRealTimeSync();
   validateFormCompletion();
   renderSpecialCatalogTable();
+  
+  // Auto-focus status search input on initial page load
+  setTimeout(() => {
+    const statusInput = document.getElementById("status-emp-id");
+    if (statusInput) statusInput.focus();
+  }, 200);
 });
 
 function setupModeSelector() {
@@ -246,7 +252,7 @@ async function loadConfigAndCounts(forceRefresh = false) {
       STATE.configDates = MOCK_CONFIG_DATES;
       STATE.configTimeSlots = MOCK_CONFIG_TIMESLOTS;
       STATE.allowCancellation = false;
-      STATE.isRegistrationClosed = false;
+      STATE.isRegistrationClosed = true; // Default to closed on fallback
       updateRegistrationClosedUI();
     } finally {
       hideLoader();
@@ -272,6 +278,14 @@ function updateRegistrationClosedUI() {
     }
   }
   
+  // If registration is closed and user is currently looking at register tab, auto-switch to status tab
+  if (isClosed) {
+    const regTabBtn = document.getElementById("tab-btn-register");
+    if (regTabBtn && regTabBtn.classList.contains("active")) {
+      switchTab("status");
+    }
+  }
+  
   // Update toggle checkbox in Admin Dashboard if rendered
   const adminClosedToggle = document.getElementById("admin-reg-closed-toggle");
   if (adminClosedToggle) {
@@ -294,9 +308,22 @@ function switchTab(tabName) {
   }
   
   document.querySelectorAll(".tab-content").forEach(panel => panel.classList.remove("active"));
-  document.getElementById(`tab-${tabName}`).classList.add("active");
+  const targetPanel = document.getElementById(`tab-${tabName}`);
+  if (targetPanel) {
+    targetPanel.classList.add("active");
+  }
   
-  if (tabName === "special-catalog") {
+  if (tabName === "status") {
+    setTimeout(() => {
+      const statusInput = document.getElementById("status-emp-id");
+      if (statusInput) statusInput.focus();
+    }, 50);
+  } else if (tabName === "register") {
+    setTimeout(() => {
+      const regInput = document.getElementById("reg-emp-id");
+      if (regInput) regInput.focus();
+    }, 50);
+  } else if (tabName === "special-catalog") {
     renderSpecialCatalogTable();
   } else if (tabName === "admin") {
     checkAdminState();
