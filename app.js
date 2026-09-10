@@ -37,7 +37,7 @@ const CLIENT_CACHE = {
 // --- Special Self-Pay Test Catalog Data (34 items) ---
 const SPECIAL_TESTS = [
   { id: 1, name: "น้ำตาลในเลือด (FBS)", price: 30, fasting: true, category: "blood", icon: '<i class="fa-solid fa-droplet" style="color: #ef4444;"></i>', notes: "สิทธิประกันสังคมพนักงานอายุ 35 ปีขึ้นไปฟรี (กรณีไม่เคยใช้สิทธิ์ตรวจของประกันสังคมในปีนี้) | *งดอาหารและเครื่องดื่ม 8-12 ชั่วโมง (ดื่มน้ำเปล่าได้)*" },
-  { id: 2, name: "ตรวจหาระดับไขมันในเลือด (Cholesterol, Triglyceride, HDL, LDL)", price: 142, fasting: true, category: "blood", icon: '<i class="fa-solid fa-flask" style="color: #f59e0b;"></i>', notes: "งดอาหารและเครื่องดื่ม 8-12 ชั่วโมง (ดื่มน้ำเปล่าได้) | ฟรี สำหรับพนักงานอายุ 35 ปีขึ้นไป (พนักงานอายุไม่ถึง 35 ปี ตรวจเฉพาะ Cholesterol, HDL ฟรี ไม่จำเป็นต้องงดอาหารและเครื่องดื่ม)" },
+  { id: 2, name: "ตรวจหาระดับไขมันในเลือด (Cholesterol, Triglyceride, HDL, LDL)", price: 142, fasting: true, category: "blood", icon: '<i class="fa-solid fa-flask" style="color: #f59e0b;"></i>', notes: "งดอาหารและเครื่องดื่ม 8-12 ชั่วโมง (ดื่มน้ำเปล่าได้) | ฟรี สำหรับพนักงานอายุ 35 ปีขึ้นไป (พนักงานอายุไม่ถึง 35 ปี ตรวจเฉพาะ Cholesterol, HDL ฟรี โดยต้องงดอาหารและเครื่องดื่ม)" },
   { id: 3, name: "ตรวจสมรรถภาพการทำงานของตับ (SGO, SGPT, ALK)", price: 150, fasting: false, category: "blood", icon: '<i class="fa-solid fa-heart-pulse" style="color: #10b981;"></i>', notes: "ดูความผิดปกติของตับ ที่อาจทำให้เป็นโรคตับอักเสบ หรือโรคมะเร็งตับ" },
   { id: 4, name: "ตรวจการทำงานของไต (BUN, Creatinine)", price: 60, fasting: false, category: "blood", icon: '<i class="fa-solid fa-stethoscope" style="color: #06b6d4;"></i>', notes: "ตรวจสอบการทำงานของไตว่าทำงานปกติหรือไม่" },
   { id: 5, name: "ตรวจภาวะไทรอยด์ (TFT = FT3, FT4, TSH)", price: 400, fasting: false, category: "blood", icon: '<i class="fa-solid fa-dna" style="color: #8b5cf6;"></i>', notes: "ควบคุมการเผาผลาญ บ่งบอกต่อมไทรอยด์ทำงานผิดปกติหรือไม่" },
@@ -144,7 +144,11 @@ const MOCK_CONFIG_TIMESLOTS = [
   { slotTime: "12:00 - 12:30", limit: 50 },
   { slotTime: "12:30 - 13:00", limit: 50 },
   { slotTime: "13:00 - 13:30", limit: 50 },
-  { slotTime: "13:30 - 14:00", limit: 50 }
+  { slotTime: "13:30 - 14:00", limit: 50 },
+  { slotTime: "14:00 - 14:30", limit: 50 },
+  { slotTime: "14:30 - 15:00", limit: 50 },
+  { slotTime: "15:00 - 15:30", limit: 50 },
+  { slotTime: "15:30 - 16:00", limit: 50 }
 ];
 
 // Initialize Mock Registrations locally in LocalStorage
@@ -579,21 +583,15 @@ function handleEmployeeLookupResult(employee, registration = null) {
 function getTestFastingInfo(testName, defaultNpo = false) {
   const lower = (testName || "").toLowerCase();
   
-  // 2-Lipid test (Total Cholesterol & HDL only, without TG / Triglyceride): NO fasting required
-  const hasCholOrHdl = lower.includes("cholesterol") || lower.includes("hdl") || lower.includes("total cholesterol");
-  const hasTriglyceride = lower.includes("triglyceride") || lower.includes("tg");
+  // Lipid tests (Cholesterol, HDL, LDL, Triglyceride, ไขมัน) or Sugar (FBS, น้ำตาล): Fasting required
+  const hasLipid = lower.includes("ไขมัน") || lower.includes("cholesterol") || lower.includes("hdl") || lower.includes("ldl") || lower.includes("triglyceride") || lower.includes("tg");
   const hasFbs = lower.includes("fbs") || lower.includes("น้ำตาล");
   
-  if (hasCholOrHdl && !hasTriglyceride && !hasFbs) {
-    return { isNpo: false, is2Lipids: true, note: "ไม่จำเป็นต้องงดน้ำและอาหาร" };
+  if (defaultNpo || hasLipid || hasFbs) {
+    return { isNpo: true, note: "งดอาหารและเครื่องดื่ม" };
   }
   
-  // 4-Lipid test (with TG) or FBS: Fasting required (งดอาหารและเครื่องดื่ม, plain water ok)
-  if (defaultNpo || hasTriglyceride || hasFbs || (lower.includes("ไขมัน") && !hasCholOrHdl)) {
-    return { isNpo: true, is2Lipids: false, note: "งดอาหารและเครื่องดื่ม" };
-  }
-  
-  return { isNpo: false, is2Lipids: false, note: "" };
+  return { isNpo: false, note: "" };
 }
 
 // --- Render checkup list dynamically ---
@@ -623,10 +621,9 @@ function renderCheckupList(employee, isPregnant = false) {
     ssoTests.push({ name: "ตรวจหาเชื้อไวรัสตับอักเสบชนิดบี (HBs Ag)", npo: false, isSso: true });
   } else {
     // For age under 35 (โปรแกรมที่ 2 อายุไม่ถึง 35 ปี / เกิดตั้งแต่ พ.ศ. 2535 เป็นต้นไป):
-    // สิทธิ์ประกันสังคม: ตรวจไขมันในเลือด (Cholesterol, HDL) สำหรับอายุ 20-34 ปี
-    // *ไม่จำเป็นต้องงดน้ำและอาหาร* (ตัวที่ต้องงดคือ Triglyceride ซึ่งมีในกลุ่ม 35 ปีขึ้นไป / MGR)
+    // สิทธิ์ประกันสังคม: ตรวจไขมันในเลือด (Cholesterol, HDL) สำหรับอายุ 20-34 ปี (ต้องงดอาหารและเครื่องดื่ม)
     if (programGroup === "โปรแกรมที่ 2 อายุไม่ถึง 35 ปี") {
-      ssoTests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL)", npo: false, is2Lipids: true, isSso: true });
+      ssoTests.push({ name: "ตรวจไขมันในเลือด (Cholesterol, HDL)", npo: true, isSso: true });
     }
   }
   
@@ -675,8 +672,6 @@ function renderCheckupList(employee, isPregnant = false) {
       let extraSpan = "";
       if (fastingInfo.isNpo) {
         extraSpan = `<span class="npo-badge">งดอาหาร-เครื่องดื่ม</span>`;
-      } else if (fastingInfo.is2Lipids || t.is2Lipids) {
-        extraSpan = `<span class="no-npo-badge">ไม่จำเป็นต้องงดน้ำและอาหาร</span>`;
       }
       
       item.innerHTML = `
@@ -1225,7 +1220,6 @@ function renderStatusCard(reg, searchId) {
         tests.push({
           name: ssoItemName,
           npo: fastingInfo.isNpo,
-          is2Lipids: fastingInfo.is2Lipids,
           isSso: true
         });
         hasSsoItems = true;
@@ -1252,17 +1246,13 @@ function renderStatusCard(reg, searchId) {
         item.className = "ticket-test-item";
       }
       
-      // Add extra text for fasting items vs 2-lipid items
+      // Add extra text for fasting items
       let testNameDisplay = `${index + 1}. ${nameDisplay}`;
       const fastingInfo = getTestFastingInfo(t.name, t.npo);
       
       if (fastingInfo.isNpo) {
         if (!testNameDisplay.includes("งดอาหาร") && !testNameDisplay.includes("งดเครื่องดื่ม") && !testNameDisplay.includes("งดน้ำ")) {
           testNameDisplay += " *งดอาหารและเครื่องดื่ม*";
-        }
-      } else if (fastingInfo.is2Lipids || t.is2Lipids) {
-        if (!testNameDisplay.includes("ไม่จำเป็นต้องงด")) {
-          testNameDisplay += " *ไม่จำเป็นต้องงดน้ำและอาหาร*";
         }
       }
       
