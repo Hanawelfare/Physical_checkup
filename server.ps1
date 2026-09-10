@@ -1,7 +1,7 @@
 # server.ps1 - Lightweight PowerShell HTTP Server
 # Serves the local directory on http://127.0.0.1:8081
 
-$port = 8081
+$port = 8088
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://127.0.0.1:$port/")
 
